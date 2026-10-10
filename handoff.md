@@ -6,6 +6,8 @@ Updated **10 October 2026**, user timezone **Africa/Lagos**.
 
 This supersedes earlier references to 15-second deadlines and immutable recall submissions.
 
+Published source commit `a425efc` to the existing Netlify site; deployment `6aca477ff7fe4f254df374a2` reached **ready** with no error and the Next.js runtime present. Public homepage, participant and join routes returned 200. Live bundles contain all nine 20-second choice/vote definitions, both 60-second recall definitions, automatic-save UI and updated timing copy; the old answer submit labels are absent. Presenter creation without credentials remains rejected (401). The authenticated multiplayer and real 60-second expiry rehearsals were local; no new hosted test room was created for this deployment.
+
 - All choice questions and unscored votes now allow **20 seconds**; both recall exercises (`mini`, `boss`) allow **60 seconds**. Server cutoff, both countdowns and speed scoring use each question’s duration. Correct answers remain worth 500–1,000 points based on server acceptance time; the halfway time is now 10 seconds for choices and 30 seconds for typing.
 - On phones, tapping a vote saves it immediately. For choice + reason, tapping the choice opens the reasons; tapping a reason saves the complete answer. Normal answer flows have no submit button. A failed choice save remains locked and offers an idempotent recovery retry.
 - Recall fields save automatically after a short typing pause and on blur, and remain editable until closure. Saves are serialized, failed saves retry, and only successful server acknowledgements show “Sauvegardé automatiquement”. Refresh restores the saved fields. The latest saved text (even incomplete or cleared) is used at automatic or manual closure. Recall points use the last changed save’s server timestamp; identical retries do not change that timestamp. Changed answers after closure are rejected.
@@ -58,8 +60,8 @@ This file describes the delivered project and the user's latest decisions. It re
 | Hosted persistence | Netlify Database / Postgres |
 | Publication method | Committed source exported and uploaded through the official Netlify MCP server |
 | Automatic GitHub deployments | **Not configured**; a push does not publish the site |
-| Latest verified production deploy | `6aca32bd728c68adf831024c` |
-| Latest application-change commit | `6948bb2` — QR lobby and landing-page simplification |
+| Latest verified production deploy | `6aca477ff7fe4f254df374a2` |
+| Latest application-change commit | `a425efc` — automatic saving and 20/60-second timers |
 | Git HEAD before this handoff refresh | `0b690bf` — public repository documentation |
 | Current request | Write this full handoff so a new conversation can continue without earlier chat history |
 
