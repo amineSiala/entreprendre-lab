@@ -1,3 +1,5 @@
+> Mise à jour du 10 octobre 2026 : la version en ligne est désormais publiée sur https://entreprendre-lab.netlify.app avec stockage Postgres. Voir le README pour les nouveaux tests et les modalités de publication. Les mentions de limitation au réseau local ci-dessous décrivent la validation initiale.
+
 # État d’implémentation
 
 La référence pédagogique actuelle est la liste de huit formes fournie par l’utilisateur. Les six profils proposés dans l’ancien handoff sont remplacés. L’interface vise un atelier lumineux, avec cas à analyser, choix justifiés et rappel sans indices.

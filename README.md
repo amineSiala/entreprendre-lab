@@ -6,9 +6,11 @@ La liste officielle fournie par l’enseignant est utilisée : création ex nihi
 
 ## Jouer à distance (Netlify)
 
-Le dépôt privé est https://github.com/Amine-SIALA/entreprendre-lab. Le déploiement Netlify nécessite la connexion du propriétaire ; aucune URL publique n’est encore confirmée.
+**Site public : https://entreprendre-lab.netlify.app**
 
-Une fois publié, ouvrir le site, choisir **Sur téléphone**, créer une salle et envoyer le lien de participation aux amis. Ils peuvent utiliser leurs données mobiles ou un autre Wi-Fi. Le présentateur avance les questions depuis son navigateur ; les participants répondent et justifient sur le leur. Pour commenter les diapositives ensemble à distance, partager l’écran dans votre appel habituel.
+Dépôt privé : https://github.com/Amine-SIALA/entreprendre-lab. Déploiement effectué via le serveur MCP officiel de Netlify le 10 octobre 2026. Le site utilise Postgres et le runtime Next.js de Netlify. Les publications actuelles sont des exports du code committé envoyés via MCP ; les pushes GitHub ne déclenchent pas encore de déploiement automatique.
+
+Ouvrir le site, choisir **Sur téléphone**, créer une salle et envoyer le lien de participation aux amis. Ils peuvent utiliser leurs données mobiles ou un autre Wi-Fi. Le présentateur avance les questions depuis son navigateur ; les participants répondent et justifient sur le leur. Pour commenter les diapositives ensemble à distance, partager l’écran dans votre appel habituel.
 
 Le fichier `netlify.toml` active le mode en ligne. `@netlify/database` et les migrations de `netlify/database/migrations/` configurent Postgres. Chaque modification verrouille la ligne de la salle dans une transaction : les instances serveur partagent les réponses et le contrôle. La version hébergée ne bascule jamais vers un fichier local si la base est indisponible. Le mode en ligne génère les QR codes à partir de l’URL du site, indépendamment de l’adresse LAN utilisée en développement.
 
@@ -62,7 +64,11 @@ Un cookie HTTP-only de 30 jours contient une identité aléatoire ; seule son em
 
 Le participant peut demander la suppression de ses réponses et de sa participation à une salle depuis `/me`. Il n’y a pas de purge automatique des salles : pour effacer toute l’installation, arrêter le serveur puis supprimer son fichier `rehearsal.json`. Cela supprime toutes les salles de ce fichier. Voir aussi [la page de confidentialité](src/app/privacy/page.tsx).
 
-Le serveur arbitre la navigation, les réponses et la correction ; les navigateurs interrogent régulièrement son état. Le contrôle est réservé à un onglet du présentateur à la fois. Le stockage partagé Netlify est implémenté ; sa validation sur le site public reste à effectuer après connexion. L’authentification récupérable n’est pas implémentée. En ligne, les données sont conservées dans Postgres sans purge automatique ; chaque participant peut effacer sa participation depuis son bilan. Voir [l’état d’implémentation](docs/implementation-status.md).
+Le serveur arbitre la navigation, les réponses et la correction ; les navigateurs interrogent régulièrement son état. Le contrôle est réservé à un onglet du présentateur à la fois. Le stockage partagé Netlify est déployé et vérifié sur le site public avec trois sessions indépendantes. L’authentification récupérable n’est pas implémentée. En ligne, les données sont conservées dans Postgres sans purge automatique ; chaque participant peut effacer sa participation depuis son bilan. Voir [l’état d’implémentation](docs/implementation-status.md).
+
+## Vérification du déploiement
+
+Le 10 octobre 2026 : 49 tests unitaires/API/Postgres, lint et compilation de production en mode en ligne passent. Les cinq scénarios navigateur passent (le scénario de 60 participants a été relancé après correction du port dans le test). Sur l’URL HTTPS publique : création d’une salle, trois inscriptions et réponses simultanées, persistance après relecture, publication des résultats, affichage mobile 390 px et suppression des participations de test vérifiés. Il s’agit de sessions simulées ; aucun test sur des téléphones physiques utilisant la 4G n’a été effectué.
 
 ## Développement et vérification
 
