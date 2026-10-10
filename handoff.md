@@ -4,6 +4,8 @@ Updated **10 October 2026**, user timezone **Africa/Lagos**.
 
 ## Latest update — QR lobby and one-off classroom flow (10 October 2026)
 
+Published source commit `6948bb2` to the existing Netlify site; deployment `6aca32bd728c68adf831024c` reached **ready** with no error and the Next.js runtime present. Public homepage, stage and privacy routes returned 200. Live checks confirmed removed landing copy, QR instructions, lobby assets and presenter-auth rejection without credentials (401). The authenticated 60-player lobby rehearsal was local; no new hosted multiplayer room was created for this deployment.
+
 - Create a fresh room, project its first slide, let students scan the QR and choose nicknames, then click **Commencer** or press Right when the class is ready. The lobby never starts automatically or starts a question deadline while waiting.
 - The first slide displays joined nicknames with animated colorful cards, a live participant count and a large QR code. The roster scrolls for larger classes and respects reduced-motion preferences. Nicknames are included only in host snapshots at the first slide; participant snapshots do not receive the roster. Leaving/deleting a membership removes its nickname.
 - Removed the homepage's saved-room resume link and saving new host rooms to `elab_last_room`. The homepage no longer displays **27′ objectif de séance** or **Imaginé pour apprendre ensemble ↗**. Join copy emphasizes scanning the projected QR; entering a code remains a fallback.
@@ -45,8 +47,8 @@ This file describes the delivered project and the user's latest decisions. It re
 | Hosted persistence | Netlify Database / Postgres |
 | Publication method | Committed source exported and uploaded through the official Netlify MCP server |
 | Automatic GitHub deployments | **Not configured**; a push does not publish the site |
-| Latest verified production deploy | `6aca2c7644ae06420b06f6c1` |
-| Latest application-change commit | `46fe768` — projector leaderboard and removal of team play |
+| Latest verified production deploy | `6aca32bd728c68adf831024c` |
+| Latest application-change commit | `6948bb2` — QR lobby and landing-page simplification |
 | Git HEAD before this handoff refresh | `0b690bf` — public repository documentation |
 | Current request | Write this full handoff so a new conversation can continue without earlier chat history |
 
