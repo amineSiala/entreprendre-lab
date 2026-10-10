@@ -1,3 +1,5 @@
+> Dernière évolution — 10 octobre 2026 : accueil centré sur « Rejoindre une salle » ; création via « Espace présentateur » avec vérification serveur et secret Netlify. Tous les défis durent 15 secondes et se ferment automatiquement. Choix + justification corrects : 500–1 000 points selon la rapidité ; erreur/hors délai : 0 ; votes : 0 ; rappel : proportion de formes correctes × score de rapidité. Ces règles remplacent les anciens points de participation et chronos indicatifs ci-dessous. Le mot de passe n’est jamais enregistré dans ce dépôt.
+
 > Mise à jour du 10 octobre 2026 : la version en ligne est désormais publiée sur https://entreprendre-lab.netlify.app avec stockage Postgres. Voir le README pour les nouveaux tests et les modalités de publication. Les mentions de limitation au réseau local ci-dessous décrivent la validation initiale.
 
 # État d’implémentation

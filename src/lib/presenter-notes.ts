@@ -2,7 +2,7 @@ import "server-only";
 
 // Only the current note is sent to an authenticated presenter snapshot.
 export const presenterNotes: Record<string, string> = {
-  "welcome": "Invitez la classe à devenir le jury. Le raisonnement compte plus que la vitesse. Objectif final : rappeler les huit formes et les appliquer à un cas inédit.",
+  "welcome": "Invitez la classe à devenir le jury. Répondre juste et vite rapporte jusqu’à 1 000 points. Objectif final : rappeler les huit formes et les appliquer à un cas inédit.",
   "opening-open": "Laissez chacun prendre position. Ce vote de départ n’est pas noté.",
   "opening-results": "Le projet peut se développer dans une organisation : annoncez l’intrapreneuriat.",
   "mission": "Scénario fictif : repas sains, accessibles et pratiques. Huit personnages explorent le même problème.",
@@ -33,7 +33,7 @@ export const presenterNotes: Record<string, string> = {
   "axes-results": "On peut reprendre une entreprise et la réorienter vers l’environnement.",
   "jury-open": "Demandez une raison et une limite. L’option interne exploite les moyens disponibles mais exige une validation.",
   "jury-results": "Faites défendre deux options différentes avec les contraintes du scénario.",
-  "boss-open": "90 secondes indicatives. Aucun menu de formes ni nom de personnage pendant la réponse.",
+  "boss-open": "15 secondes, puis clôture automatique. Aucun menu de formes ni nom de personnage pendant la réponse.",
   "boss-results": "Le rappel est distinct des points. À moins de trois réponses individuelles, les détails restent privés.",
   "transfer-open": "Ce cas quitte la restauration. Trois indices vérifient le transfert des concepts.",
   "transfer-results": "Société distincte soutenue = essaimage ; innovation centrale = techno ; finalité environnementale = vert.",

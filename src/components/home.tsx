@@ -14,12 +14,13 @@ function lastRoom() { try { const value = localStorage.getItem("elab_last_room")
 export function Home() {
   const router = useRouter();
   const previousRoom = useSyncExternalStore(subscribeRoom, lastRoom, () => null);
-  const [mode, setMode] = useState<PlayMode>("teams");
+  const [mode, setMode] = useState<PlayMode>("phones");
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
-  const [modal, setModal] = useState<"join" | "rules" | "program" | null>(null), [code, setCode] = useState("");
+  const [modal, setModal] = useState<"join" | "rules" | "program" | "presenter" | null>(null), [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   async function start() {
     setBusy(true); setError("");
-    try { const result = await api<{ code: string }>("", { action: "create", mode }); try { localStorage.setItem("elab_last_room", result.code); } catch { /* The room still works without local browser storage. */ } router.push(`/host/session/${result.code}/stage`); }
+    try { const result = await api<{ code: string }>("", { action: "create", mode, password }); try { localStorage.setItem("elab_last_room", result.code); } catch { /* The room still works without local browser storage. */ } router.push(`/host/session/${result.code}/stage`); }
     catch (e) { setError((e as Error).message); setBusy(false); }
   }
   return <main className="home-shell">
@@ -27,17 +28,18 @@ export function Home() {
     <section className="home-hero">
       <div className="hero-copy"><p className="eyebrow"><span className="small-star">✳</span> L’ENTREPRENEURIAT SE JOUE AUSSI EN CLASSE</p><h1>Un problème.<br /><span className="blue-text"><span className="number-circle">8</span> façons</span><br />d’entreprendre<span className="coral-text">.</span></h1>
       <p className="hero-description">Un campus à nourrir. Huit projets à découvrir.<br />Et vous, pour faire les bons choix.</p>
-      <div className="mode-switch" aria-label="Format de la présentation"><button aria-pressed={mode === "teams"} className={mode === "teams" ? "active" : ""} onClick={() => setMode("teams")}><Users size={17} /> En équipes</button><button aria-pressed={mode === "phones"} className={mode === "phones" ? "active" : ""} onClick={() => setMode("phones")}><Smartphone size={17} /> Sur téléphone</button></div>
-      <div className="hero-actions"><button className="button primary" onClick={start} disabled={busy}><Play size={17} fill="currentColor" /> {busy ? "Ouverture…" : "C’est parti !"}<ArrowRight size={21} /></button><button className="text-button" onClick={() => setModal("join")}>Rejoindre une salle <MoveUpRight size={17} /></button></div>
-      <p className="mode-hint">{mode === "teams" ? "On discute, on choisit, on justifie. Un seul écran suffit." : "Un QR code, un pseudo et chacun joue sur son téléphone."}</p>
+
+      <div className="hero-actions"><button className="button primary" onClick={() => setModal("join")}>Rejoindre une salle <ArrowRight size={21} /></button></div>
+      <p className="mode-hint">Un code, un pseudo et 15 secondes pour relever chaque défi.</p>
       {previousRoom && <button className="resume-link" onClick={() => router.push(`/host/session/${previousRoom}/stage`)}><RotateCcw size={12} /> Reprendre la salle {previousRoom}</button>}
-      {error && <p role="alert" className="error-message">{error}</p>}</div>
+      </div>
       <CampusArt />
     </section>
     <section className="home-bottom"><div className="learning-promise"><Sparkle size={28} /><div><strong>Comprendre, pas deviner.</strong><p>Des cas concrets. Des choix à défendre. Des déclics.</p></div></div><div className="home-stat"><strong>08</strong><span>formes à explorer</span></div><div className="home-stat"><strong>03</strong><span>présentateurs</span></div><div className="home-stat"><strong><Clock3 size={22} /> 27′</strong><span>objectif de séance</span></div></section>
-    <footer className="home-footer"><span>UN ATELIER, PAS UN MONOLOGUE.</span><span>Imaginé pour apprendre ensemble <span className="blue-text">↗</span></span></footer>
+    <footer className="home-footer"><button className="text-button" onClick={() => { setPassword(""); setError(""); setModal("presenter"); }}>Espace présentateur</button><span>Imaginé pour apprendre ensemble <span className="blue-text">↗</span></span></footer>
+    {modal === "presenter" && <Modal title="Espace présentateur" close={() => { setModal(null); setPassword(""); }}><p>Authentifiez-vous pour créer une salle.</p><form onSubmit={event => { event.preventDefault(); void start(); }}><label htmlFor="presenter-password">Mot de passe présentateur</label><input id="presenter-password" type="password" className="code-input" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required maxLength={128} autoFocus /><div className="mode-switch" aria-label="Format de la présentation"><button type="button" aria-pressed={mode === "teams"} className={mode === "teams" ? "active" : ""} onClick={() => setMode("teams")}><Users size={17} /> En équipes</button><button type="button" aria-pressed={mode === "phones"} className={mode === "phones" ? "active" : ""} onClick={() => setMode("phones")}><Smartphone size={17} /> Sur téléphone</button></div><button className="button primary" type="submit" disabled={busy || !password}><Play size={17} />{busy ? "Ouverture…" : "Créer la salle"}<ArrowRight size={18} /></button>{error && <p role="alert" className="error-message">{error}</p>}</form></Modal>}
     {modal === "join" && <Modal title="Entrez dans la partie." close={() => setModal(null)}><p>Le code à six caractères s’affiche sur le projecteur.</p><form onSubmit={e => { e.preventDefault(); router.push(`/join/${code.toUpperCase()}`); }}><label htmlFor="room-code">Code de la salle</label><input id="room-code" className="code-input" maxLength={6} minLength={6} required autoFocus value={code} onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""))} placeholder="ABC234" autoComplete="off" /><button className="button primary" type="submit">Rejoindre <ArrowRight size={18} /></button></form></Modal>}
-    {modal === "rules" && <Modal title="Le raisonnement marque des points." close={() => setModal(null)}><div className="rules-list"><p><b>01 · Observez.</b> Repérez les faits utiles dans chaque situation.</p><p><b>02 · Discutez.</b> Choisissez une réponse, puis la raison qui la justifie.</p><p><b>03 · Faites le point.</b> Découvrez l’explication et confrontez les idées.</p><p><b>04 · Retrouvez les huit.</b> Un rappel sans indices, puis un nouveau cas.</p></div><div className="note-box">+10 points de participation, +20 pour une réponse et sa justification correctes. Aucun bonus de vitesse. Le rappel est mesuré séparément.</div><p className="muted">Sur téléphone : {connectionHint} En équipes : réponses orales ou sur papier, puis choix collectif à l’écran.</p></Modal>}
+    {modal === "rules" && <Modal title="Le raisonnement marque des points." close={() => setModal(null)}><div className="rules-list"><p><b>01 · Observez.</b> Repérez les faits utiles dans chaque situation.</p><p><b>02 · Discutez.</b> Choisissez une réponse, puis la raison qui la justifie.</p><p><b>03 · Faites le point.</b> Découvrez l’explication et confrontez les idées.</p><p><b>04 · Retrouvez les huit.</b> Un rappel sans indices, puis un nouveau cas.</p></div><div className="note-box">15 secondes par défi. Un choix et sa justification corrects rapportent de 500 à 1 000 points : plus vite vous validez, plus vous marquez. Une erreur ou un délai dépassé : 0. Les votes ne sont pas notés. Le rappel rapporte une part des points selon les formes retrouvées.</div><p className="muted">Sur téléphone : {connectionHint} En équipes : réponses orales ou sur papier, puis choix collectif à l’écran.</p></Modal>}
     {modal === "program" && <Modal title="Le parcours de la séance." close={() => setModal(null)}><p>{curriculumStatus}</p><ol className="program-list">{chapters.map((chapter, i) => <li key={chapter}><span>{String(i + 1).padStart(2, "0")}</span>{chapter}</li>)}</ol></Modal>}
   </main>;
 }

@@ -10,7 +10,7 @@ La liste officielle fournie par l’enseignant est utilisée : création ex nihi
 
 Dépôt privé : https://github.com/Amine-SIALA/entreprendre-lab. Déploiement effectué via le serveur MCP officiel de Netlify le 10 octobre 2026. Le site utilise Postgres et le runtime Next.js de Netlify. Les publications actuelles sont des exports du code committé envoyés via MCP ; les pushes GitHub ne déclenchent pas encore de déploiement automatique.
 
-Ouvrir le site, choisir **Sur téléphone**, créer une salle et envoyer le lien de participation aux amis. Ils peuvent utiliser leurs données mobiles ou un autre Wi-Fi. Le présentateur avance les questions depuis son navigateur ; les participants répondent et justifient sur le leur. Pour commenter les diapositives ensemble à distance, partager l’écran dans votre appel habituel.
+Ouvrir le site, cliquer sur le petit lien **Espace présentateur** en bas de page, saisir le mot de passe privé, choisir **Sur téléphone**, puis créer une salle et envoyer le lien de participation aux amis. Ils peuvent utiliser leurs données mobiles ou un autre Wi-Fi. Le présentateur avance les questions depuis son navigateur ; les participants répondent et justifient sur le leur. Pour commenter les diapositives ensemble à distance, partager l’écran dans votre appel habituel.
 
 Le fichier `netlify.toml` active le mode en ligne. `@netlify/database` et les migrations de `netlify/database/migrations/` configurent Postgres. Chaque modification verrouille la ligne de la salle dans une transaction : les instances serveur partagent les réponses et le contrôle. La version hébergée ne bascule jamais vers un fichier local si la base est indisponible. Le mode en ligne génère les QR codes à partir de l’URL du site, indépendamment de l’adresse LAN utilisée en développement.
 
@@ -25,7 +25,7 @@ npm install
 npm run dev
 ```
 
-Ouvrir `http://localhost:3000`, choisir un format puis « C’est parti ! ». La création d’une salle associe le navigateur du présentateur à cette salle. Conserver ce navigateur et ses cookies pour la reprendre.
+Configurer `PRESENTER_PASSWORD_HASH` dans `.env.local` avec le SHA-256 hexadécimal du mot de passe présentateur (jamais dans une variable `NEXT_PUBLIC_`). Ouvrir `http://localhost:3000`, puis **Espace présentateur**, saisir le mot de passe, choisir un format et créer une salle. La création d’une salle associe le navigateur du présentateur à cette salle. Conserver ce navigateur et ses cookies pour la reprendre.
 
 La configuration locale actuelle utilise l’adresse Wi-Fi `http://192.168.100.174:3000` pour les QR codes. La modifier dans `.env.local` si l’ordinateur change d’adresse. « Reprendre la salle » retrouve la dernière salle créée dans ce navigateur.
 
@@ -50,9 +50,9 @@ Les scripts écoutent sur `0.0.0.0`. L’accès dépend du pare-feu Windows et d
 
 ## Présenter
 
-Les flèches **→ / ←** font avancer ou reculer les 36 étapes. Une question comporte une ouverture puis une fermeture avec résultats et explication. Le décompte sert de repère ; le présentateur garde la main sur la fermeture. Fermer dans les dix premières secondes demande une seconde pression sur **→** ; **Échap** annule. **P** met en pause le chronomètre général, pas celui de la question. **R** retrouve l’état du serveur.
+Les flèches **→ / ←** font avancer ou reculer les 36 étapes. Une question comporte une ouverture puis une fermeture avec résultats et explication. Chaque défi dure 15 secondes ; le serveur refuse les réponses tardives et affiche les résultats automatiquement à la prochaine synchronisation. Fermer dans les dix premières secondes demande une seconde pression sur **→** ; **Échap** annule. **P** met en pause le chronomètre général, pas celui de la question. **R** retrouve l’état du serveur.
 
-Le mode équipes enregistre un choix collectif, sa justification et un rappel collectif. Il ne mesure pas les résultats individuels de chaque équipe. Le mode téléphone enregistre une réponse par participant et par question. Les points récompensent la participation et le raisonnement, sans bonus de vitesse. Le rappel sans indices est présenté séparément.
+Le mode équipes enregistre un choix collectif, sa justification et un rappel collectif. Il ne mesure pas les résultats individuels de chaque équipe. Le mode téléphone enregistre une réponse par participant et par question. Un choix ET une justification corrects rapportent `round(1000 × (1 − 0,5 × secondes écoulées / 15))`, soit de 500 à 1 000 points avant la limite. Une erreur ou un délai dépassé rapporte 0. Les votes ne rapportent pas de points. Pour le rappel, multiplier ce score par la proportion de formes correctes, sans doublons. Le temps est mesuré par le serveur, jusqu’à la validation complète.
 
 Consulter [le guide des présentateurs](docs/presenter-cheatsheet.md) pour le déroulé et les raccourcis.
 
@@ -68,7 +68,7 @@ Le serveur arbitre la navigation, les réponses et la correction ; les navigateu
 
 ## Vérification du déploiement
 
-Le 10 octobre 2026 : 49 tests unitaires/API/Postgres, lint et compilation de production en mode en ligne passent. Les cinq scénarios navigateur passent (le scénario de 60 participants a été relancé après correction du port dans le test). Sur l’URL HTTPS publique : création d’une salle, trois inscriptions et réponses simultanées, persistance après relecture, publication des résultats, affichage mobile 390 px et suppression des participations de test vérifiés. Il s’agit de sessions simulées ; aucun test sur des téléphones physiques utilisant la 4G n’a été effectué.
+Le 10 octobre 2026 : 55 tests unitaires/API/Postgres/authentification/chronométrage, lint et compilation de production en mode en ligne passent. Les six scénarios navigateur passent, dont authentification et clôture automatique après 15 secondes. Sur l’URL HTTPS publique : création d’une salle, trois inscriptions et réponses simultanées, persistance après relecture, publication des résultats, affichage mobile 390 px et suppression des participations de test vérifiés. Il s’agit de sessions simulées ; aucun test sur des téléphones physiques utilisant la 4G n’a été effectué.
 
 ## Développement et vérification
 

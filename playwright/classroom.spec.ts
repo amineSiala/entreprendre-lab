@@ -10,8 +10,11 @@ async function next(page: Page, id: string) {
 }
 async function start(page: Page, phones = false) {
   await page.goto("/");
+  await page.getByRole("button", { name: "Espace présentateur", exact: true }).click();
+  await page.getByLabel("Mot de passe présentateur").fill(process.env.PRESENTER_TEST_PASSWORD || "test-presenter-password");
+  await page.getByRole("button", { name: phones ? "Sur téléphone" : "En équipes", exact: true }).click();
   if (phones) await page.getByRole("button", { name: "Sur téléphone", exact: true }).click();
-  await page.getByRole("button", { name: "C’est parti !" }).click();
+  await page.getByRole("button", { name: "Créer la salle" }).click();
   await expect(page.locator("[data-beat='welcome']")).toBeVisible();
   return page.url().split("/").at(-2)!;
 }
@@ -77,7 +80,7 @@ test("three independent phones persist answers, reasoning and private recall acr
   await next(page, "opening-results");
   await phones[0].reload();
   await expect(phones[0].getByText("Votre avis compte.")).toBeVisible();
-  await expect(phones[0].getByText("+10 points de participation")).toBeVisible();
+  await expect(phones[0].getByText("Vote sans points")).toBeVisible();
   for (const beat of beats.slice(3, 8)) await next(page, beat.id);
   for (let i = 0; i < phones.length; i++) {
     await expect(phones[i].getByRole("radio")).toHaveCount(4);
@@ -165,12 +168,12 @@ test("focused controls keep native Space; answer retries and replay never award 
   await page.getByRole("button", { name: "Valider le choix" }).click();
   await expect(page.getByText("Choix collectif enregistré · → pour révéler")).toBeVisible();
   await next(page, "opening-results");
-  await expect(page.getByText("+10 pts", { exact: true })).toBeVisible();
+  await expect(page.getByText("+0 pts", { exact: true })).toBeVisible();
   await page.waitForTimeout(240);
   await page.keyboard.press("ArrowLeft");
   await expect(page.getByText("Relecture · question déjà fermée")).toBeVisible();
   await next(page, "opening-results");
-  await expect(page.getByText("+10 pts", { exact: true })).toBeVisible();
+  await expect(page.getByText("+0 pts", { exact: true })).toBeVisible();
 });
 
 test("60 simulated API participants can join and save exactly one answer each", async ({ page, playwright, baseURL }) => {
@@ -197,4 +200,21 @@ test("60 simulated API participants can join and save exactly one answer each", 
     expect(snapshot.round.counts).toEqual([15, 15, 15, 15]);
     console.log(`Local loopback rehearsal: 60 joins ${joinMs}ms; 60 submissions ${submitMs}ms; 60 identical retries, 0 duplicates.`);
   } finally { await Promise.all(clients.map(client => client.dispose())); }
+});
+
+test("visitors join, presenter authentication gates creation, and rounds expire after 15 seconds", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Rejoindre une salle", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Créer la salle", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Espace présentateur", exact: true }).click();
+  await page.getByLabel("Mot de passe présentateur").fill("incorrect-password");
+  await page.getByRole("button", { name: "Créer la salle", exact: true }).click();
+  await expect(page.getByRole("dialog").getByRole("alert")).toHaveText("Mot de passe présentateur incorrect.");
+  await page.getByLabel("Mot de passe présentateur").fill(process.env.PRESENTER_TEST_PASSWORD || "test-presenter-password");
+  await page.getByRole("button", { name: "Créer la salle", exact: true }).click();
+  await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "welcome");
+  await next(page, "opening-open");
+  await expect(page.locator(".question-timer")).toContainText(/00:1[345]/);
+  await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "opening-results", { timeout: 20_000 });
+  await expect(page.getByText("Réponses fermées", { exact: true })).toBeVisible();
 });

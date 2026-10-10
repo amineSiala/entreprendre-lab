@@ -27,14 +27,15 @@ export function recallForms(values: string[], allowed: FormId[]) {
   }
   return [...found];
 }
-export function grade(questionId: string, answer: Answer): Feedback {
+export function grade(questionId: string, answer: Answer, elapsedMs = 0): Feedback {
   const q = questions[questionId], key = keys[questionId];
+  const speedPoints = elapsedMs >= q.seconds * 1000 ? 0 : Math.round(1000 * (1 - 0.5 * Math.max(0, elapsedMs) / (q.seconds * 1000)));
   if (q.kind === "recall") {
     const recalled = recallForms(answer.recall ?? [], q.forms);
-    return { recalled, xp: 10 + recalled.length * 5, explanation: key.explanation, takeaway: key.takeaway };
+    return { recalled, xp: Math.round(speedPoints * Math.min(1, recalled.length / (q.recallCount ?? q.forms.length))), explanation: key.explanation, takeaway: key.takeaway };
   }
-  if (q.kind === "vote") return { recalled: [], xp: 10, explanation: key.explanation, takeaway: key.takeaway, correctChoice: key.choice };
+  if (q.kind === "vote") return { recalled: [], xp: 0, explanation: key.explanation, takeaway: key.takeaway, correctChoice: key.choice };
   const choiceCorrect = key.choice === answer.choice, reasonCorrect = key.reason === answer.reason;
   const correct = choiceCorrect && reasonCorrect;
-  return { correct, choiceCorrect, reasonCorrect, recalled: [], xp: 10 + (correct ? 20 : 0), explanation: key.explanation, takeaway: key.takeaway, correctChoice: key.choice, correctReason: key.reason };
+  return { correct, choiceCorrect, reasonCorrect, recalled: [], xp: correct ? speedPoints : 0, explanation: key.explanation, takeaway: key.takeaway, correctChoice: key.choice, correctReason: key.reason };
 }

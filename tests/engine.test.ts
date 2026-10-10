@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { beats } from "@/content/beats.fr";
 import { keys } from "@/lib/answer-keys";
-import { move, RoomError, snapshot, submit } from "@/lib/engine";
+import { expireRounds, move, RoomError, snapshot, submit } from "@/lib/engine";
 import { presenterNotes } from "@/lib/presenter-notes";
 import { openQuestion, reveal, sessionFixture, startedAt, studentA, studentB, studentC } from "./room-fixtures";
 
@@ -16,11 +16,17 @@ describe("authoritative presentation progression", () => {
     expect(closed.version).toBe(session.version + 1);
   });
 
-  it("allows the presenter to extend a round indefinitely", () => {
+  it("rejects answers at the deadline and reveals without a presenter command", () => {
     const session = openQuestion("launch");
-    const late = submit(session, studentA, "launch", { choice: 1, reason: 2 }, startedAt + 600_000);
-    expect(late.rounds.launch.state).toBe("open");
-    expect(snapshot(late, studentA, "student").round?.submission?.feedback).toBeUndefined();
+    const last = submit(session, studentA, "launch", { choice: 1, reason: 2 }, startedAt + 14_999);
+    expect(last.rounds.launch.responses[studentA].feedback.xp).toBe(500);
+    expect(() => submit(session, studentA, "launch", { choice: 1, reason: 2 }, startedAt + 15_000)).toThrow(expect.objectContaining({ code: "CLOSED" }));
+    expect(expireRounds(last, startedAt + 14_999)).toBe(last);
+    const expired = expireRounds(last, startedAt + 15_000);
+    expect(expired.rounds.launch.state).toBe("revealed");
+    expect(beats[expired.index].id).toBe("launch-results");
+    expect(expireRounds(expired, startedAt + 30_000)).toBe(expired);
+    expect(submit(expired, studentA, "launch", { choice: 1, reason: 2 }, startedAt + 30_000)).toBe(expired);
   });
 
   it("rejects stale navigation, including repeated commands at an old version", () => {
@@ -82,7 +88,7 @@ describe("saved answers and private feedback", () => {
     const closed = reveal(accepted);
     expect(submit(closed, studentA, "launch", answer)).toBe(closed);
     expect(closed.rounds.launch.responses[studentA].at).toBe(startedAt + 50);
-    expect(snapshot(closed, studentA, "student").xp).toBe(30);
+    expect(snapshot(closed, studentA, "student").xp).toBe(998);
   });
 
   it("rejects attempts to overwrite a saved answer", () => {
@@ -143,16 +149,16 @@ describe("saved answers and private feedback", () => {
     const session = reveal(submit(openQuestion("launch", sessionFixture("teams")), "presenter", "launch", { choice: 1, reason: 2 }));
     const state = snapshot(session, "presenter", "host");
     expect(state.round?.counts).toEqual([0, 1, 0, 0]);
-    expect(state.xp).toBe(30);
+    expect(state.xp).toBe(1000);
     expect(state.canControl).toBe(false);
   });
 
   it("keeps participation XP, correct reasoning, and unaided recall separate", () => {
     let session = reveal(submit(openQuestion("launch"), studentA, "launch", { choice: 1, reason: 0 }));
-    expect(snapshot(session, studentA, "student")).toMatchObject({ xp: 10, recognized: [], recalled: [] });
+    expect(snapshot(session, studentA, "student")).toMatchObject({ xp: 0, recognized: [], recalled: [] });
     session = reveal(submit(openQuestion("social", session), studentA, "social", { choice: 3, reason: 0 }));
     session = reveal(submit(openQuestion("boss", session), studentA, "boss", { recall: ["franchise"] }));
-    expect(snapshot(session, studentA, "student")).toMatchObject({ xp: 55, recognized: ["social"], recalled: ["franchise"] });
+    expect(snapshot(session, studentA, "student")).toMatchObject({ xp: 1125, recognized: ["social"], recalled: ["franchise"] });
   });
 
   it("protects a private recall result until reveal and suppresses small class recall totals", () => {

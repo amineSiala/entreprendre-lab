@@ -91,17 +91,17 @@ describe("unaided recall grading", () => {
 
   it("awards correct reasoning only when both answer and reason are correct", () => {
     const correct = grade("launch", { choice: 1, reason: 2 });
-    expect(correct).toMatchObject({ correct: true, choiceCorrect: true, reasonCorrect: true, xp: 30, recalled: [] });
-    expect(grade("launch", { choice: 1, reason: 0 })).toMatchObject({ correct: false, choiceCorrect: true, reasonCorrect: false, xp: 10 });
-    expect(grade("launch", { choice: 0, reason: 2 })).toMatchObject({ correct: false, choiceCorrect: false, reasonCorrect: true, xp: 10 });
+    expect(correct).toMatchObject({ correct: true, choiceCorrect: true, reasonCorrect: true, xp: 1000, recalled: [] });
+    expect(grade("launch", { choice: 1, reason: 0 })).toMatchObject({ correct: false, choiceCorrect: true, reasonCorrect: false, xp: 0 });
+    expect(grade("launch", { choice: 0, reason: 2 })).toMatchObject({ correct: false, choiceCorrect: false, reasonCorrect: true, xp: 0 });
   });
 
   it("separates discussion participation and recall achievement from recognition correctness", () => {
-    expect(grade("jury", { choice: 0 })).toMatchObject({ xp: 10, recalled: [] });
+    expect(grade("jury", { choice: 0 })).toMatchObject({ xp: 0, recalled: [] });
     expect(grade("jury", { choice: 0 }).correct).toBeUndefined();
     const result = grade("boss", { recall: officialLabels });
-    expect(result).toMatchObject({ xp: 50, recalled: officialForms });
+    expect(result).toMatchObject({ xp: 1000, recalled: officialForms });
     expect(result.correct).toBeUndefined();
-    expect(grade("boss", { recall: ["inconnu"] })).toMatchObject({ xp: 10, recalled: [] });
+    expect(grade("boss", { recall: ["inconnu"] })).toMatchObject({ xp: 0, recalled: [] });
   });
 });

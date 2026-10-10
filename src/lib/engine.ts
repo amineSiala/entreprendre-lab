@@ -9,6 +9,18 @@ import type { Answer, FormId, RoomState, Session } from "@/types/domain";
 export class RoomError extends Error {
   constructor(public status: number, message: string, public code = "ROOM_ERROR") { super(message); }
 }
+export function expireRounds(session: Session, now = Date.now()): Session {
+  const expired = Object.values(session.rounds).filter(round => round.state === "open" && now >= round.openedAt + questions[round.questionId].seconds * 1000);
+  if (!expired.length) return session;
+  const next = structuredClone(session);
+  for (const round of expired) {
+    next.rounds[round.questionId].state = "revealed";
+    next.rounds[round.questionId].closedAt = round.openedAt + questions[round.questionId].seconds * 1000;
+    if (beats[next.index].questionId === round.questionId && beats[next.index].kind.endsWith("-open")) next.index++;
+  }
+  next.version++;
+  return next;
+}
 export function move(session: Session, expectedVersion: number, direction: -1 | 1, force = false, target?: number, now = Date.now()) {
   if (session.version !== expectedVersion) throw new RoomError(409, "La présentation a changé. Synchronisation en cours.", "STALE");
   const current = beats[session.index];
@@ -48,6 +60,7 @@ export function submit(session: Session, actor: string, questionId: string, answ
     return session;
   }
   if (round.state !== "open" || beats[session.index].questionId !== questionId || !beats[session.index].kind.endsWith("-open")) throw new RoomError(409, "Cette question est fermée.", "CLOSED");
+  if (now >= round.openedAt + q.seconds * 1000) throw new RoomError(409, "Les 15 secondes sont écoulées.", "CLOSED");
   if (q.kind === "recall") {
     if (!answer.recall || answer.recall.length > (q.recallCount ?? 8) || !answer.recall.some(s => s.trim())) throw new RoomError(422, "Indiquez au moins une forme.");
   } else {
@@ -55,7 +68,7 @@ export function submit(session: Session, actor: string, questionId: string, answ
     if (q.reasons && (answer.reason === undefined || answer.reason < 0 || answer.reason >= q.reasons.length)) throw new RoomError(422, "Choisissez aussi une justification.");
   }
   const next = structuredClone(session);
-  next.rounds[questionId].responses[actor] = { answer, at: now, feedback: grade(questionId, answer) };
+  next.rounds[questionId].responses[actor] = { answer, at: now, feedback: grade(questionId, answer, now - round.openedAt) };
   return next;
 }
 export function snapshot(session: Session, actor: string, role: "host" | "student", controller?: string): RoomState {

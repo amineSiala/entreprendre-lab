@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { beats } from "@/content/beats.fr";
 import { createSession, getSession, identityHash, newIdentity, transaction } from "@/lib/store";
-import { move, RoomError, snapshot, submit } from "@/lib/engine";
+import { expireRounds, move, RoomError, snapshot, submit } from "@/lib/engine";
+import { requirePresenter } from "@/lib/presenter-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const cookieName = "elab_identity";
 const schema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("create"), mode: z.enum(["teams", "phones"]) }),
+  z.object({ action: z.literal("create"), mode: z.enum(["teams", "phones"]), password: z.string().max(128).optional() }),
   z.object({ action: z.literal("join"), nickname: z.string().trim().min(2).max(24) }),
   z.object({ action: z.literal("sync"), controller: z.string().uuid() }),
   z.object({ action: z.literal("release"), controller: z.string().uuid() }),
@@ -41,6 +42,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path?: 
       const raw = await request.text();
       if (raw.length > 6000) throw new RoomError(413, "Réponse trop longue.");
       body = schema.parse(JSON.parse(raw));
+      if (body.action === "create") requirePresenter(body.password);
     }
     const payload = await transaction(data => {
       if (body?.action === "create") {
@@ -49,7 +51,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path?: 
         const session = createSession(data, actor, body.mode);
         return { code: session.code };
       }
-      const room = getSession(data, path[0] ?? "");
+      const room = expireRounds(getSession(data, path[0] ?? ""));
       const role = room.hostHash === actor ? "host" : "student";
       if (body?.action === "join") {
         if (room.mode !== "phones") throw new RoomError(409, "Cette salle se joue en équipes sur le projecteur.");

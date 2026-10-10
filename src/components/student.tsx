@@ -102,7 +102,7 @@ export function StudentJoin({ code: rawCode }: { code: string }) {
     <section className="student-join-card">
       <div className="student-ticket-art" aria-hidden="true"><span className="student-art-star">✳</span><Smartphone size={66} strokeWidth={1.7} /><span className="student-art-dot">!</span></div>
       <p className="eyebrow">VOTRE PLACE DANS LA PARTIE</p><h1>Le campus<br />compte sur vous<span>.</span></h1>
-      <p className="student-intro">Observez les situations, faites un choix et défendez votre raisonnement. Aucun bonus de vitesse.</p>
+      <p className="student-intro">Observez les situations, faites un choix et défendez votre raisonnement. 15 secondes pour répondre. Plus vite et juste : jusqu’à 1 000 points.</p>
       {valid ? <form className="student-join-form" onSubmit={join}>
         <label htmlFor="student-nickname">Comment vous appelle-t-on ?</label>
         <input id="student-nickname" placeholder="Votre pseudo" minLength={2} maxLength={24} value={nickname} onChange={event => setNickname(event.target.value)} autoComplete="nickname" required disabled={busy} aria-describedby="nickname-hint" />
@@ -125,16 +125,19 @@ function Timer({ question, openedAt }: { question: Question; openedAt: number })
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const remaining = Math.min(question.seconds, Math.max(0, question.seconds - Math.floor((now - openedAt) / 1000)));
-  return <div className="student-timer"><Clock3 size={15} /><span>{remaining > 0 ? `${remaining} s · repère` : "La parole au présentateur"}</span><span className="student-timer-hint">Il décide de la clôture.</span></div>;
+  return <div className="student-timer"><Clock3 size={15} /><span>{remaining > 0 ? `${remaining} s` : "Temps écoulé"}</span><span className="student-timer-hint">Clôture automatique.</span></div>;
 }
 
 function QuestionEditor({ question, round, code, accept }: { question: Question; round: SafeRound; code: string; accept: (next: RoomState) => void }) {
   const [choice, setChoice] = useState<number>(), [reason, setReason] = useState<number>();
   const [step, setStep] = useState(1), [recall, setRecall] = useState<string[]>(() => Array(question.recallCount ?? 0).fill(""));
   const [attempt, setAttempt] = useState<Answer | null>(null), [busy, setBusy] = useState(false), [error, setError] = useState(""), [closed, setClosed] = useState(false);
-  const locked = busy || attempt !== null;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 200); return () => clearInterval(timer); }, []);
+  const timedOut = now >= round.openedAt + question.seconds * 1000;
+  const locked = busy || attempt !== null || timedOut;
   async function submit(event: React.FormEvent) {
-    event.preventDefault(); if (busy || closed) return;
+    event.preventDefault(); if (busy || closed || timedOut) return;
     const answer = attempt ?? (question.kind === "recall" ? { recall } : { choice, ...(question.reasons ? { reason } : {}) });
     setAttempt(answer); setBusy(true); setError("");
     try { accept(await api<RoomState>(code, { action: "answer", questionId: question.id, answer })); }
@@ -153,7 +156,7 @@ function QuestionEditor({ question, round, code, accept }: { question: Question;
         {showingReasons && <div className="student-choice-summary"><span>Votre choix</span><p>{choice !== undefined && question.options[choice]}</p>{!locked && <button type="button" onClick={() => setStep(1)}><ArrowLeft size={15} /> Modifier mon choix</button>}</div>}
       </>}
       {error && <div className="student-answer-error" role="alert"><strong>{closed ? "Le défi est terminé." : "Envoi non confirmé."}</strong><p>{error}</p>{!closed && <p>Votre réponse reste verrouillée pendant la vérification. Réessayez : elle ne sera comptée qu’une fois.</p>}</div>}
-      {question.reasons && step === 1 ? <button type="button" className="button primary student-submit" disabled={!ready || locked} onClick={() => setStep(2)}>Je justifie mon choix <ArrowRight size={18} /></button> : <button className="button primary student-submit" type="submit" disabled={!ready || busy || closed}>{busy ? <LoaderCircle className="student-spin" size={18} /> : attempt ? <RefreshCw size={18} /> : <Send size={18} />}{busy ? "Envoi en cours…" : attempt ? "Vérifier et réessayer" : question.kind === "recall" ? "Envoyer mes réponses" : question.kind === "vote" ? "Envoyer mon avis" : "Valider mon raisonnement"}</button>}
+      {question.reasons && step === 1 ? <button type="button" className="button primary student-submit" disabled={!ready || locked} onClick={() => setStep(2)}>Je justifie mon choix <ArrowRight size={18} /></button> : <button className="button primary student-submit" type="submit" disabled={!ready || busy || closed || timedOut}>{busy ? <LoaderCircle className="student-spin" size={18} /> : attempt ? <RefreshCw size={18} /> : <Send size={18} />}{busy ? "Envoi en cours…" : attempt ? "Vérifier et réessayer" : question.kind === "recall" ? "Envoyer mes réponses" : question.kind === "vote" ? "Envoyer mon avis" : "Valider mon raisonnement"}</button>}
       <p className="student-submit-note"><LockKeyhole size={12} /> Une fois envoyée, la réponse ne peut plus être modifiée.</p>
     </form>
   </section>;
@@ -167,7 +170,7 @@ function Revealed({ question, round }: { question: Question; round: SafeRound })
   const feedback = round.submission?.feedback;
   const recall = question.kind === "recall", vote = question.kind === "vote";
   return <section className="student-card student-feedback" aria-live="polite"><div className={`student-feedback-icon ${feedback?.correct ? "correct" : ""}`}>{recall ? <Flag size={35} /> : feedback?.correct ? <CheckCircle2 size={35} /> : <Lightbulb size={35} />}</div><p className="eyebrow">LE MOMENT DU DÉCLIC</p><h1>{!feedback ? "On fait le point." : recall ? `${feedback.recalled.length} sur ${question.recallCount} retrouvées.` : vote ? "Votre avis compte." : feedback.correct ? "Bien raisonné !" : "L’indice qui change tout."}</h1>
-    {feedback && <span className="student-xp">+{feedback.xp} points {vote ? "de participation" : ""}</span>}
+    {feedback && <span className="student-xp">{vote ? "Vote sans points" : `+${feedback.xp} points`}</span>}
     {!feedback && <p className="student-field-hint">Vous n’avez pas envoyé de réponse pour ce défi. Profitez de la correction.</p>}
     {feedback && !recall && !vote && <div className="student-answer-checks"><span><span aria-hidden="true">{feedback.choiceCorrect ? "✓" : "↗"}</span>{feedback.choiceCorrect ? "Choix correct" : "Choix à revoir"}</span><span><span aria-hidden="true">{feedback.reasonCorrect ? "✓" : "↗"}</span>{feedback.reasonCorrect ? "Justification correcte" : "Justification à revoir"}</span></div>}
     {round.correctChoice !== undefined && <div className="student-feedback-answer"><span>Le choix appuyé par les faits</span><p>{question.options[round.correctChoice]}</p>{round.correctReason !== undefined && question.reasons && <small>{question.reasons[round.correctReason]}</small>}</div>}
@@ -183,7 +186,7 @@ export function StudentRoom({ code: rawCode }: { code: string }) {
     {error && <ConnectionNotice error={error} retry={() => void refresh()} />}
     {!room ? error ? <section className="student-card student-empty"><Radio size={36} /><h1>Retrouvons votre salle.</h1><p>Vérifiez le code et votre connexion. {connectionHint}</p><Link href={`/join/${code}`} className="button primary">Rejoindre la salle <ArrowRight size={17} /></Link><Link href="/" className="student-back">Retour à l’accueil</Link></section> : <div className="student-loading" role="status"><LoaderCircle className="student-spin" size={28} /><p>Connexion à la partie…</p></div> : room.role === "host" ? <section className="student-card student-empty"><Users size={35} /><h1>Vous êtes le présentateur.</h1><p>Pour participer, ouvrez ce lien sur un autre appareil ou dans une fenêtre privée.</p><Link className="button primary" href={`/host/session/${code}/stage`}>Retour au projecteur <ArrowRight size={18} /></Link></section> : room.mode === "teams" ? <section className="student-card student-empty"><Users size={35} /><h1>Cette partie se joue en équipes.</h1><p>Regardez le projecteur et discutez avec votre équipe. Les choix se font ensemble.</p></section> : <>
       <div className="student-player-strip"><span><span className="student-avatar">{saved?.code === code ? saved.nickname.slice(0, 1).toUpperCase() : "✳"}</span><b className="student-player-name">{saved?.code === code ? saved.nickname : "Dans la partie"}</b></span><span><Sparkles size={15} />{room.xp ?? 0} points</span></div>
-      {room.ended ? <section className="student-card student-waiting"><div className="student-success-icon"><Trophy size={38} /></div><p className="eyebrow">PARCOURS TERMINÉ</p><h1>Huit formes.<br /><span>À vous d’entreprendre.</span></h1><p>Retrouvez vos points de participation et les formes reconnues ou rappelées dans votre carnet personnel.</p><Link href="/me" className="button primary">Voir mon carnet <ArrowRight size={17} /></Link></section> : !round || !question ? <Waiting nickname={saved?.code === code ? saved.nickname : undefined} /> : round.state === "revealed" ? <Revealed key={round.questionId} question={question} round={round} /> : round.submission ? <Submitted question={question} round={round} /> : <QuestionEditor key={round.questionId} question={question} round={round} code={code} accept={accept} />}
+      {room.ended ? <section className="student-card student-waiting"><div className="student-success-icon"><Trophy size={38} /></div><p className="eyebrow">PARCOURS TERMINÉ</p><h1>Huit formes.<br /><span>À vous d’entreprendre.</span></h1><p>Retrouvez vos points et les formes reconnues ou rappelées dans votre carnet personnel.</p><Link href="/me" className="button primary">Voir mon carnet <ArrowRight size={17} /></Link></section> : !round || !question ? <Waiting nickname={saved?.code === code ? saved.nickname : undefined} /> : round.state === "revealed" ? <Revealed key={round.questionId} question={question} round={round} /> : round.submission ? <Submitted question={question} round={round} /> : <QuestionEditor key={round.questionId} question={question} round={round} code={code} accept={accept} />}
     </>}
   </StudentShell>;
 }

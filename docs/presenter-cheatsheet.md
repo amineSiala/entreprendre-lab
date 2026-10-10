@@ -1,3 +1,5 @@
+> Création de salle : petit lien **Espace présentateur** en bas de l’accueil, puis mot de passe privé. Tous les défis, y compris le rappel, durent 15 secondes.
+
 # Guide de présentation
 
 Objectif : comprendre les huit formes du cours, les reconnaître à partir d’indices et les rappeler sans support. Le parcours compte 36 étapes réparties en 12 chapitres. Prévoir 27 minutes et environ deux minutes de questions. Les temps ci-dessous sont une proposition de répétition, à ajuster au rythme de la classe.
@@ -35,14 +37,14 @@ Objectif : comprendre les huit formes du cours, les reconnaître à partir d’i
 
 En équipes, laisser discuter ou écrire sur papier, puis saisir le choix collectif retenu. L’application ne tient pas de classement séparé pour chaque équipe. Sur téléphone, chaque personne envoie sa propre réponse ; une réponse validée ne se remplace pas.
 
-Le temps affiché est indicatif : atteindre zéro ne ferme pas automatiquement une question. Une fermeture pendant les dix premières secondes déclenche un avertissement ; une seconde pression sur **→** confirme, **Échap** annule cette confirmation. Un changement de chapitre pendant une question ouverte est refusé : terminer d’abord cette question avec la flèche droite.
+Chaque question dure 15 secondes. À zéro, les réponses se verrouillent et les résultats apparaissent automatiquement. Une fermeture pendant les dix premières secondes déclenche un avertissement ; une seconde pression sur **→** confirme, **Échap** annule cette confirmation. Un changement de chapitre pendant une question ouverte est refusé : terminer d’abord cette question avec la flèche droite.
 
 ## Ce que mesurent les résultats
 
-- Participation : **10 points** pour une réponse enregistrée.
-- Choix et justification tous deux corrects : **20 points supplémentaires**.
-- Rappel : **5 points par forme retrouvée**, en plus de la participation. Les doublons ne rapportent pas de points supplémentaires.
-- Aucun bonus de vitesse. Les votes donnent uniquement les points de participation : le premier sert à discuter d’une idée reçue, celui du jury sert à défendre un compromis.
+- Réponse incorrecte ou hors délai : **0 point**.
+- Choix et justification tous deux corrects : **500 à 1 000 points**, selon la rapidité de la validation complète.
+- Rappel : la proportion de formes correctes multiplie le score de rapidité, avec un maximum de **1 000 points**. Les doublons ne rapportent rien.
+- Les votes sont sans points : ils servent à discuter et défendre un compromis.
 
 Les points ne constituent pas une preuve de maîtrise. Le bilan distingue les formes reconnues dans les cas et celles rappelées sans indices au cours de la séance. Ce cumul ne remplace pas le résultat du rappel final à lui seul. Les accents, quelques variantes de formulation et certaines fautes simples sont tolérés au rappel ; une formulation inhabituelle peut ne pas être reconnue. En discuter oralement si nécessaire.
 

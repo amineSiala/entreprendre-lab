@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -16,12 +16,14 @@ let dataDirectory: string;
 const previousDataDirectory = process.env.DEMO_DATA_DIR;
 
 beforeEach(async () => {
+  vi.stubEnv("PRESENTER_PASSWORD_HASH", createHash("sha256").update("test-presenter-password").digest("hex"));
   dataDirectory = await mkdtemp(path.join(os.tmpdir(), "entreprendre-room-test-"));
   process.env.DEMO_DATA_DIR = dataDirectory;
 });
 
 afterEach(async () => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
   if (previousDataDirectory === undefined) delete process.env.DEMO_DATA_DIR;
   else process.env.DEMO_DATA_DIR = previousDataDirectory;
   // Cleanup is restricted to the explicitly created test directory under the temp root.
@@ -45,7 +47,7 @@ async function request(browser: Browser, code = "", body?: object, overrides: { 
 }
 
 async function create(browser: Browser, mode: PlayMode = "phones") {
-  const result = await request(browser, "", { action: "create", mode });
+  const result = await request(browser, "", { action: "create", mode, password: "test-presenter-password" });
   expect(result.response.status).toBe(200);
   expect(result.payload.code).toMatch(/^[A-Z2-9]{6}$/);
   return result.payload.code!;
@@ -67,6 +69,25 @@ async function open(browser: Browser, code: string, controller: string, question
 }
 
 describe("room API ownership and durable classroom flow", () => {
+  it("cannot create a room by bypassing the presenter dialog", async () => {
+    expect((await request({}, "", { action: "create", mode: "phones" })).response.status).toBe(401);
+    expect((await request({}, "", { action: "create", mode: "phones", password: "incorrect" })).response.status).toBe(401);
+    await create({});
+  });
+
+  it("automatically reveals at 15 seconds and rejects a late answer", async () => {
+    const host: Browser = {}, student: Browser = {};
+    const code = await create(host);
+    await request(student, code, { action: "join", nickname: "Timer" });
+    const controller = await control(host, code);
+    const opened = await open(host, code, controller);
+    vi.spyOn(Date, "now").mockReturnValue(opened.round!.openedAt + 15_000);
+    const current = await request(student, code);
+    expect(current.payload.round?.state).toBe("revealed");
+    expect(beats[current.payload.index!].id).toBe("launch-results");
+    expect((await request(student, code, { action: "answer", questionId: "launch", answer: { choice: 1, reason: 2 } })).payload.code).toBe("CLOSED");
+  });
+
   it("persists two independent student answers, preserves refresh identity, and reveals private feedback", async () => {
     const host: Browser = {}, alice: Browser = {}, bilal: Browser = {};
     const code = await create(host);
@@ -93,12 +114,14 @@ describe("room API ownership and durable classroom flow", () => {
     expect(revealed.payload.round?.counts).toBeUndefined();
     const aliceRefresh = await request({ token: alice.token }, code);
     const bilalRefresh = await request({ token: bilal.token }, code);
-    expect(aliceRefresh.payload).toMatchObject({ xp: 30, recognized: ["exnihilo", "essaimage"] });
+    expect(aliceRefresh.payload).toMatchObject({ recognized: ["exnihilo", "essaimage"] });
+    expect(aliceRefresh.payload.xp).toBeGreaterThanOrEqual(500);
+    expect(aliceRefresh.payload.xp).toBeLessThanOrEqual(1000);
     expect(aliceRefresh.payload.round?.submission?.feedback?.correct).toBe(true);
     expect(aliceRefresh.payload).not.toHaveProperty("presenterNote");
     expect(bilalRefresh.payload).not.toHaveProperty("presenterNote");
     expect(revealed.payload.presenterNote).toBeTruthy();
-    expect(bilalRefresh.payload).toMatchObject({ xp: 10, recognized: [] });
+    expect(bilalRefresh.payload).toMatchObject({ xp: 0, recognized: [] });
     expect(bilalRefresh.payload.round?.submission?.answer).toEqual({ choice: 0, reason: 0 });
     expect(aliceRefresh.response.headers.get("cache-control")).toBe("no-store, private");
     const serialized = await readFile(path.join(dataDirectory, "rehearsal.json"), "utf8");
