@@ -1,0 +1,11 @@
+export type FormId = "exnihilo" | "essaimage" | "franchise" | "intrapreneur" | "repreneur" | "social" | "techno" | "vert";
+export type PlayMode = "teams" | "phones";
+export type BeatKind = "title" | "mission" | "definition" | "character" | "compare" | "taxonomy" | "question-open" | "question-results" | "question-explain" | "recall-open" | "recall-results" | "conclusion";
+export type Beat = { id: string; chapter: number; kind: BeatKind; title: string; speaker: "P1" | "P2" | "P3" | "TOUS"; character?: FormId; questionId?: string };
+export type Question = { id: string; kind: "choice" | "vote" | "recall"; tag: string; title: string; scenario: string; prompt: string; options: string[]; reasons?: string[]; seconds: number; recallCount?: number; forms: FormId[] };
+export type Answer = { choice?: number; reason?: number; recall?: string[] };
+export type Feedback = { correct?: boolean; choiceCorrect?: boolean; reasonCorrect?: boolean; xp: number; recalled: FormId[]; explanation: string; correctChoice?: number; correctReason?: number; takeaway: string };
+export type Round = { questionId: string; state: "open" | "revealed"; openedAt: number; closedAt?: number; responses: Record<string, { answer: Answer; at: number; feedback: Feedback }> };
+export type Session = { id: string; code: string; hostHash: string; controller?: { id: string; until: number }; mode: PlayMode; index: number; version: number; createdAt: number; members: Record<string, { nickname: string; joinedAt: number }>; rounds: Record<string, Round> };
+export type SafeRound = { questionId: string; state: "open" | "revealed"; openedAt: number; count: number; counts?: number[]; allRecalled?: number; averageRecall?: number; explanation?: string; takeaway?: string; correctChoice?: number; correctReason?: number; submission?: { answer: Answer; feedback?: Feedback }; recalledCounts?: Partial<Record<FormId, number>> };
+export type RoomState = { id: string; code: string; mode: PlayMode; index: number; version: number; participants: number; role: "host" | "student"; round?: SafeRound; xp?: number; recognized?: FormId[]; recalled?: FormId[]; canControl?: boolean; presenterNote?: string; ended?: boolean };
