@@ -145,13 +145,6 @@ describe("saved answers and private feedback", () => {
     expect(publicState.round?.submission).toBeUndefined();
   });
 
-  it("treats the projected team answer as collective, with a visible distribution", () => {
-    const session = reveal(submit(openQuestion("launch", sessionFixture("teams")), "presenter", "launch", { choice: 1, reason: 2 }));
-    const state = snapshot(session, "presenter", "host");
-    expect(state.round?.counts).toEqual([0, 1, 0, 0]);
-    expect(state.xp).toBe(1000);
-    expect(state.canControl).toBe(false);
-  });
 
   it("keeps participation XP, correct reasoning, and unaided recall separate", () => {
     let session = reveal(submit(openQuestion("launch"), studentA, "launch", { choice: 1, reason: 0 }));

@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const cookieName = "elab_identity";
 const schema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("create"), mode: z.enum(["teams", "phones"]), password: z.string().max(128).optional() }),
+  z.object({ action: z.literal("create"), mode: z.literal("phones").default("phones"), password: z.string().max(128).optional() }),
   z.object({ action: z.literal("join"), nickname: z.string().trim().min(2).max(24) }),
   z.object({ action: z.literal("sync"), controller: z.string().uuid() }),
   z.object({ action: z.literal("release"), controller: z.string().uuid() }),
@@ -54,7 +54,6 @@ async function handle(request: NextRequest, context: { params: Promise<{ path?: 
       const room = expireRounds(getSession(data, path[0] ?? ""));
       const role = room.hostHash === actor ? "host" : "student";
       if (body?.action === "join") {
-        if (room.mode !== "phones") throw new RoomError(409, "Cette salle se joue en équipes sur le projecteur.");
         room.members[actor] ??= { nickname: body.nickname, joinedAt: Date.now() };
       } else if (role !== "host" && !room.members[actor]) throw new RoomError(403, "Rejoignez cette salle avant de continuer.");
       const controller = body && "controller" in body ? body.controller : request.nextUrl.searchParams.get("controller") ?? undefined;
@@ -72,7 +71,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path?: 
       let updated = room;
       if (body?.action === "move") updated = move(room, body.version, body.direction, body.force, body.target);
       if (body?.action === "answer") {
-        if (role === "host" && room.mode !== "teams") throw new RoomError(403, "Les réponses se font sur les téléphones.");
+        if (role === "host") throw new RoomError(403, "Les réponses se font sur les téléphones.");
         updated = submit(room, actor, body.questionId, body.answer);
       }
       if (body?.action === "forget") {

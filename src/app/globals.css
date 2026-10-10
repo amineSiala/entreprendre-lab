@@ -49,9 +49,6 @@ svg{flex-shrink:0}
 .number-circle{position:relative;display:inline-block;padding:0 4px;z-index:0}
 .number-circle:before{content:'';position:absolute;inset:7px -5px 3px;background:var(--yellow);border:1.5px solid var(--ink);border-radius:50%;transform:rotate(-12deg);z-index:-1}
 .hero-description{font-size:17px;line-height:1.65;color:#5d6872;margin-top:25px;letter-spacing:-.15px}
-.mode-switch{display:flex;width:fit-content;gap:4px;margin-top:27px;padding:4px;border:1px solid #deded4;border-radius:9px;background:#f4f3eb}
-.mode-switch button{display:flex;align-items:center;gap:8px;min-height:36px;padding:8px 13px;font-size:12px;font-weight:650;border-radius:6px;color:#697077}
-.mode-switch button.active{background:#fff;box-shadow:0 1px 4px #192e4215;color:var(--ink)}
 .hero-actions{display:flex;align-items:center;gap:24px;margin-top:19px}
 .hero-actions .primary{min-width:190px}.mode-hint{margin-top:15px;font-size:11px;color:#757b7d}
 .home-bottom{padding:26px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr;gap:22px;align-items:center}

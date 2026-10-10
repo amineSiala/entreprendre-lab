@@ -24,6 +24,11 @@ export function expireRounds(session: Session, now = Date.now()): Session {
 export function move(session: Session, expectedVersion: number, direction: -1 | 1, force = false, target?: number, now = Date.now()) {
   if (session.version !== expectedVersion) throw new RoomError(409, "La présentation a changé. Synchronisation en cours.", "STALE");
   const current = beats[session.index];
+  // Keep existing beat indices stable for persisted rooms and participant screens.
+  if (target === undefined && session.leaderboardVisible && direction < 0)
+    return { ...session, leaderboardVisible: false, version: session.version + 1 };
+  if (target === undefined && direction > 0 && !session.leaderboardVisible && current.kind.endsWith("-results") && current.questionId && session.rounds[current.questionId]?.state === "revealed")
+    return { ...session, leaderboardVisible: true, version: session.version + 1 };
   const active = Object.values(session.rounds).find(round => round.state === "open");
   if (target !== undefined && active) throw new RoomError(409, "Fermez la question avec la flèche droite avant de changer de chapitre.");
   const nextIndex = Math.max(0, Math.min(beats.length - 1, target ?? session.index + direction));
@@ -34,6 +39,7 @@ export function move(session: Session, expectedVersion: number, direction: -1 | 
       throw new RoomError(409, "Moins de 10 secondes. Appuyez encore sur → pour fermer, ou attendez.", "EARLY_CLOSE");
   }
   const result = structuredClone(session);
+  result.leaderboardVisible = false;
   result.index = nextIndex;
   result.version++;
   const beat = beats[nextIndex];
@@ -74,10 +80,27 @@ export function submit(session: Session, actor: string, questionId: string, answ
 export function snapshot(session: Session, actor: string, role: "host" | "student", controller?: string): RoomState {
   const beat = beats[session.index], question = beat.questionId ? questions[beat.questionId] : undefined;
   const round = beat.questionId ? session.rounds[beat.questionId] : undefined;
-  const state: RoomState = { id: session.id, code: session.code, mode: session.mode, index: session.index, version: session.version, participants: Object.keys(session.members).length, role, ended: beat.kind === "conclusion" };
+  const state: RoomState = { id: session.id, code: session.code, mode: "phones", index: session.index, version: session.version, participants: Object.keys(session.members).length, role, ended: beat.kind === "conclusion" };
   if (role === "host") {
     state.canControl = Boolean(session.controller && session.controller.id === controller && session.controller.until > Date.now());
     state.presenterNote = presenterNotes[beat.id];
+    state.leaderboardVisible = !!session.leaderboardVisible;
+    if (round?.state === "revealed") {
+      const rows = Object.entries(session.members).map(([id, member]) => {
+        let points = 0, previousPoints = 0;
+        for (const r of Object.values(session.rounds)) {
+          if (r.state !== "revealed") continue;
+          const earned = r.responses[id]?.feedback.xp ?? 0;
+          points += earned;
+          if (r.questionId !== round.questionId) previousPoints += earned;
+        }
+        return { nickname: member.nickname, joinedAt: member.joinedAt, points, previousPoints };
+      }).sort((a, b) => b.points - a.points || a.joinedAt - b.joinedAt || a.nickname.localeCompare(b.nickname, "fr"));
+      const ranked = rows.map((row, index) => ({ nickname: row.nickname, points: row.points, previousPoints: row.previousPoints, rank: rows.findIndex(other => other.points === row.points) + 1, position: index }));
+      const last = ranked.filter(row => row.points === ranked.at(-1)?.points);
+      const publicRow = ({ nickname, points, previousPoints, rank }: typeof ranked[number]) => ({ nickname, points, previousPoints, rank });
+      state.leaderboard = { top: ranked.slice(0, 3).map(publicRow), bottom: ranked.slice(Math.max(3, ranked.length - 3)).map(publicRow), lastNames: last.slice(0, 3).map(row => row.nickname), lastCount: last.length, total: ranked.length };
+    }
   }
   if (round && question) {
     const responses = Object.values(round.responses);
@@ -88,7 +111,7 @@ export function snapshot(session: Session, actor: string, role: "host" | "studen
       const key = keys[round.questionId];
       Object.assign(state.round, { explanation: key.explanation, takeaway: key.takeaway, correctChoice: key.choice, correctReason: key.reason });
       // Class-level percentages are suppressed for fewer than three phone responses.
-      if (session.mode === "teams" || responses.length >= 3) {
+      if (responses.length >= 3) {
         state.round.counts = question.options.map((_, index) => responses.filter(r => r.answer.choice === index).length);
         if (question.kind === "recall") {
           state.round.allRecalled = responses.filter(r => r.feedback.recalled.length === question.recallCount).length;
@@ -98,7 +121,7 @@ export function snapshot(session: Session, actor: string, role: "host" | "studen
       }
     }
   }
-  if (role === "student" || session.mode === "teams") {
+  if (role === "student") {
     const recognized = new Set<FormId>(), recalled = new Set<FormId>();
     state.xp = 0;
     for (const r of Object.values(session.rounds)) {

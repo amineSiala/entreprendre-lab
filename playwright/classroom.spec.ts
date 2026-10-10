@@ -6,14 +6,16 @@ async function next(page: Page, id: string) {
   await page.keyboard.press("ArrowRight");
   await page.waitForTimeout(280);
   if (await page.locator(".early-toast").isVisible()) { await page.keyboard.press("ArrowRight"); }
+  if ((await page.locator(".stage-canvas").getAttribute("data-beat"))?.endsWith("-leaderboard") && !id.endsWith("-leaderboard")) {
+    await page.waitForTimeout(240);
+    await page.keyboard.press("ArrowRight");
+  }
   await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", id);
 }
-async function start(page: Page, phones = false) {
+async function start(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Espace présentateur", exact: true }).click();
   await page.getByLabel("Mot de passe présentateur").fill(process.env.PRESENTER_TEST_PASSWORD || "test-presenter-password");
-  await page.getByRole("button", { name: phones ? "Sur téléphone" : "En équipes", exact: true }).click();
-  if (phones) await page.getByRole("button", { name: "Sur téléphone", exact: true }).click();
   await page.getByRole("button", { name: "Créer la salle" }).click();
   await expect(page.locator("[data-beat='welcome']")).toBeVisible();
   return page.url().split("/").at(-2)!;
@@ -57,7 +59,7 @@ test("all 36 beats fit 16:9 and 4:3 projectors, with keyboard replay and reduced
 test("three independent phones persist answers, reasoning and private recall across refresh", async ({ page, browser }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 1366, height: 768 });
-  const code = await start(page, true);
+  const code = await start(page);
   const contexts = await Promise.all([320, 390, 430].map(width => browser.newContext({ viewport: { width, height: 844 }, reducedMotion: "reduce" })));
   const phones = await Promise.all(contexts.map(context => context.newPage()));
   for (let i = 0; i < phones.length; i++) {
@@ -157,28 +159,9 @@ test("only one host tab controls the room and offline slides never fabricate res
   await expect(page.getByText(/votes et sauvegarde suspendus/)).not.toBeVisible();
 });
 
-test("focused controls keep native Space; answer retries and replay never award twice", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await start(page);
-  await next(page, "opening-open");
-  const first = page.locator(".answer-tile").first();
-  await first.focus(); await page.keyboard.press("Space");
-  await expect(first).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "opening-open");
-  await page.getByRole("button", { name: "Valider le choix" }).click();
-  await expect(page.getByText("Choix collectif enregistré · → pour révéler")).toBeVisible();
-  await next(page, "opening-results");
-  await expect(page.getByText("+0 pts", { exact: true })).toBeVisible();
-  await page.waitForTimeout(240);
-  await page.keyboard.press("ArrowLeft");
-  await expect(page.getByText("Relecture · question déjà fermée")).toBeVisible();
-  await next(page, "opening-results");
-  await expect(page.getByText("+0 pts", { exact: true })).toBeVisible();
-});
-
 test("60 simulated API participants can join and save exactly one answer each", async ({ page, playwright, baseURL }) => {
   if (!baseURL) throw new Error("A test server URL is required");
-  const code = await start(page, true);
+  const code = await start(page);
   const clients = await Promise.all(Array.from({ length: 60 }, () => playwright.request.newContext({ baseURL, extraHTTPHeaders: { Origin: baseURL } })));
   const joinStarted = Date.now();
   try {

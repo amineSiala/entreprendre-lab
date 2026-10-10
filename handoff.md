@@ -2,6 +2,19 @@
 
 Updated **10 October 2026**, user timezone **Africa/Lagos**.
 
+## Latest local update — projector leaderboard (10 October 2026)
+
+This update supersedes references below to team play and the absence of rankings. It has not been published to Netlify.
+
+- Phone participation is now the only format. Team selection, collective answer controls and team creation through the API were removed. Legacy rooms expose phone behavior without rewriting their stored question indices; old collective answers do not become participant scores.
+- After each question's result/explanation, press Right to show cumulative top 3 / bottom 3 and a French last-place roast. Right again continues; Left returns to the explanation. The leaderboard phase persists in the room, survives refresh and respects the controller lease. Phones remain on personal feedback and never receive leaderboard data.
+- Scores include revealed rounds only, including zero-point nonresponders. Votes show unchanged totals. Equal scores share a rank, with stable join-time/name ordering for display slots. Tied last-place players receive a group joke; fewer than six participants are not duplicated across panels; an empty room shows an invitation to join.
+- Animated podium entrances, score counters, confetti, staggered bottom rows and a roast card follow the existing bright theme. Reduced-motion preferences disable animation and display final scores immediately.
+- Join and privacy copy disclose projected nicknames, scores and last-place teasing. Personal answers remain private.
+- Implementation: `src/components/leaderboard.tsx`, `leaderboard.css`, host-only snapshot fields and persisted `leaderboardVisible` in the engine. Existing 36 beat indices stay stable, with up to 11 extra ranking steps.
+- Validation: 57 unit/API/storage tests, lint, TypeScript and production build passed. All six current Playwright scenarios passed across the full run and focused rerun after restoring the closed-question replay label. Coverage includes three independent phones, 60 simulated API participants, controller/offline behavior, expiry, projector-only rankings, refresh/back navigation, reduced motion, ties and a scored last-place roast. Projector layouts checked at 1920×1080, 1366×768 and 1024×768. Screenshots: ignored `artifacts/leaderboard-projector.png` and `artifacts/leaderboard-scored-projector.png`. No hosted verification or deployment was performed for this update.
+
+
 This file describes the delivered project and the user's latest decisions. It replaces the old greenfield specification. Start from the existing implementation. The original six-form taxonomy, Supabase plan, local-only hosting status, participation-only scoring, and advisory timers are obsolete. Previous specifications remain available in Git history.
 
 ## 1. Current state

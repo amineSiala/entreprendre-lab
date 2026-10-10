@@ -151,7 +151,7 @@ describe("room API ownership and durable classroom flow", () => {
 
   it("limits control to one host tab until the lease is released or expires", async () => {
     const host: Browser = {};
-    const code = await create(host, "teams");
+    const code = await create(host);
     const first = await control(host, code);
     const second = randomUUID();
     const competing = await request(host, code, { action: "sync", controller: second });
@@ -169,7 +169,7 @@ describe("room API ownership and durable classroom flow", () => {
 
   it("handles an owner GET without a controller and rejects an owner answer without a lease", async () => {
     const host: Browser = {};
-    const code = await create(host, "teams");
+    const code = await create(host);
     const state = await request(host, code);
     expect(state.response.status).toBe(200);
     expect(state.payload).toMatchObject({ role: "host", canControl: false });
@@ -206,18 +206,13 @@ describe("room API ownership and durable classroom flow", () => {
     expect(altered.payload.code).toBe("ALREADY_ANSWERED");
   });
 
-  it("keeps the classroom formats distinct at the server boundary", async () => {
-    const host: Browser = {}, student: Browser = {};
-    const teamsCode = await create(host, "teams");
-    expect((await request(student, teamsCode, { action: "join", nickname: "Équipe A" })).response.status).toBe(409);
-    const controller = await control(host, teamsCode);
-    await open(host, teamsCode, controller);
-    const answer = { action: "answer", questionId: "launch", answer: { choice: 1, reason: 2 }, controller };
-    expect((await request(host, teamsCode, answer)).response.status).toBe(200);
-    const phonesCode = await create(host);
-    await control(host, phonesCode, controller);
-    await open(host, phonesCode, controller);
-    expect((await request(host, phonesCode, answer)).response.status).toBe(403);
+  it("rejects team creation and host answers", async () => {
+    const host: Browser = {};
+    expect((await request(host, "", { action: "create", mode: "teams", password: "test-presenter-password" })).response.status).toBe(422);
+    const code = await create(host);
+    const controller = await control(host, code);
+    await open(host, code, controller);
+    expect((await request(host, code, { action: "answer", questionId: "launch", answer: { choice: 1, reason: 2 }, controller })).response.status).toBe(403);
   });
 
   it("forgets only the requesting student's answers and membership", async () => {

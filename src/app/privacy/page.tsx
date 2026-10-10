@@ -21,7 +21,7 @@ export default function PrivacyPage() {
         <section>
           <h2>Ce que la classe voit</h2>
           <p>Le projecteur affiche le nombre de participants et des résultats collectifs après la fermeture de la question. En mode téléphone, les répartitions sont masquées lorsqu’il y a moins de trois réponses. Votre réponse personnelle et votre bilan restent dans votre espace.</p>
-          <p>En mode équipes, le choix saisi sur le projecteur représente la décision collective. Il ne mesure pas la réussite individuelle de chaque personne.</p>
+          <p>Après chaque explication, le projecteur affiche les pseudos et points cumulés des trois premiers et des trois derniers, avec une taquinerie sur la performance à la dernière place. Ce classement n’est pas envoyé aux téléphones des participants.</p>
         </section>
 
         <section>

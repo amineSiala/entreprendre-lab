@@ -6,10 +6,10 @@ Objectif : comprendre les huit formes du cours, les reconnaître à partir d’i
 
 ## Avant la séance
 
-- Démarrer le serveur et choisir « En équipes » ou « Sur téléphone » sur l’accueil.
+- Ouvrir le site et créer une salle depuis « Espace présentateur ». La participation se fait sur téléphone.
 - Pour les téléphones, vérifier le Wi-Fi et le QR code avec un autre appareil avant l’arrivée de la classe. Le QR doit pointer vers l’adresse réseau de l’ordinateur, jamais vers `localhost`.
 - Garder un seul onglet de pilotage et conserver les cookies du navigateur présentateur.
-- Tester les flèches et le plein écran. Préparer papier et stylos pour le format équipes et les rappels sans indices.
+- Tester les flèches, le plein écran et la connexion d’un téléphone.
 - Répéter le parcours complet : une navigation arrière ne remet pas les réponses à zéro. Créer une nouvelle salle pour une nouvelle partie.
 
 ## Le fil de la séance
@@ -35,7 +35,7 @@ Objectif : comprendre les huit formes du cours, les reconnaître à partir d’i
 3. Fermer la question avec **→**, observer les résultats puis discuter de l’explication.
 4. Faire préciser pourquoi une proposition tentante ne correspond pas aux faits.
 
-En équipes, laisser discuter ou écrire sur papier, puis saisir le choix collectif retenu. L’application ne tient pas de classement séparé pour chaque équipe. Sur téléphone, chaque personne envoie sa propre réponse ; une réponse validée ne se remplace pas.
+Sur téléphone, chaque personne envoie sa propre réponse ; une réponse validée ne se remplace pas. Après l’explication, le classement cumulé et la taquinerie apparaissent sur le projecteur avec la flèche droite.
 
 Chaque question dure 15 secondes. À zéro, les réponses se verrouillent et les résultats apparaissent automatiquement. Une fermeture pendant les dix premières secondes déclenche un avertissement ; une seconde pression sur **→** confirme, **Échap** annule cette confirmation. Un changement de chapitre pendant une question ouverte est refusé : terminer d’abord cette question avec la flèche droite.
 
@@ -77,3 +77,6 @@ Le bouton « Continuer hors ligne » permet de parcourir les diapositives déjà
 Si un autre onglet détient le contrôle, fermer cet onglet et attendre quelques secondes : son droit de pilotage expire après huit secondes sans renouvellement. Ne pas ouvrir une nouvelle salle pour résoudre un simple problème de connexion.
 
 La suppression des cookies fait perdre l’identité locale. Il n’existe pas de récupération par compte. Pour une nouvelle séance ou une répétition complète, créer une nouvelle salle depuis l’accueil.
+## Classement après chaque question
+
+La participation se fait uniquement sur téléphone. Après la correction, appuyez sur **→** pour afficher le top 3, les trois derniers et une taquinerie de la dernière place. Appuyez encore sur **→** pour continuer ; **←** revient à l’explication. Les points sont cumulés et les égalités partagent le même rang. Le classement reste sur le projecteur : les téléphones gardent le retour personnel.
