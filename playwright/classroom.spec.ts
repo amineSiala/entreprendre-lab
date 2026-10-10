@@ -173,8 +173,8 @@ test("focused controls keep native Space; answer retries and replay never award 
   await expect(page.getByText("+10 pts", { exact: true })).toBeVisible();
 });
 
-test("60 simulated API participants can join and save exactly one answer each", async ({ page, playwright }) => {
-  const baseURL = "http://localhost:3100";
+test("60 simulated API participants can join and save exactly one answer each", async ({ page, playwright, baseURL }) => {
+  if (!baseURL) throw new Error("A test server URL is required");
   const code = await start(page, true);
   const clients = await Promise.all(Array.from({ length: 60 }, () => playwright.request.newContext({ baseURL, extraHTTPHeaders: { Origin: baseURL } })));
   const joinStarted = Date.now();

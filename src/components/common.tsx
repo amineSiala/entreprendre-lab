@@ -2,17 +2,18 @@
 import Link from "next/link";
 import { X, ArrowUpRight } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { online, connectionHint, storageHint } from "@/lib/environment";
 
 export function Brand() {
   return <Link className="brand" href="/" aria-label="Entreprendre Lab, accueil"><span className="brand-mark"><i /><i /><i /><i /></span><span>entreprendre<span className="brand-dot">.</span><b>lab</b></span></Link>;
 }
-export function DemoBadge() { return <span className="demo-badge"><span /> RÉPÉTITION LOCALE</span>; }
+export function DemoBadge() { return <span className="demo-badge"><span /> {online ? "PARTIE EN LIGNE" : "RÉPÉTITION LOCALE"}</span>; }
 export function Modal({ title, children, close }: { title: string; children: React.ReactNode; close: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { const el = dialog.current; el?.showModal(); return () => el?.close(); }, []);
   return <dialog ref={dialog} className="modal" aria-label={title} onCancel={e => { e.preventDefault(); close(); }} onClick={e => { if (e.target === e.currentTarget) close(); }}><div className="modal-head"><h2>{title}</h2><button className="icon-button" aria-label="Fermer" onClick={close}><X size={22} /></button></div>{children}</dialog>;
 }
-export function LocalNotice() { return <p className="local-notice">Les réponses sont conservées sur cet ordinateur. Pour jouer sur téléphone, utilisez le même Wi-Fi. <Link href="/privacy">En savoir plus <ArrowUpRight size={12} /></Link></p>; }
+export function LocalNotice() { return <p className="local-notice">{storageHint} {connectionHint} <Link href="/privacy">En savoir plus <ArrowUpRight size={12} /></Link></p>; }
 export async function api<T>(code: string, body?: object, query = ""): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12_000);

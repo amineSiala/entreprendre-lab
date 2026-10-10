@@ -82,15 +82,15 @@ async function handle(request: NextRequest, context: { params: Promise<{ path?: 
       }
       data.sessions[room.code] = updated;
       return snapshot(updated, actor, role, controller);
-    }, request.method === "POST");
+    }, request.method === "POST", path[0]);
     const response = NextResponse.json(payload, { headers: { "Cache-Control": "no-store, private" } });
     if (existing !== token && body && ["create", "join"].includes(body.action)) response.cookies.set(cookieName, token, { httpOnly: true, sameSite: "lax", secure: request.nextUrl.protocol === "https:", path: "/", maxAge: 60 * 60 * 24 * 30 });
     return response;
   } catch (error) {
     if (error instanceof RoomError) return NextResponse.json({ error: error.message, code: error.code }, { status: error.status, headers: { "Cache-Control": "no-store" } });
     if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Vérifiez les informations saisies." }, { status: 422 });
-    console.error("Rehearsal storage failure", error instanceof Error ? error.message : "unknown");
-    return NextResponse.json({ error: "Le serveur local ne peut pas enregistrer les données. Réessayez." }, { status: 500 });
+    console.error("Room storage failure", error instanceof Error ? error.name : "unknown");
+    return NextResponse.json({ error: "Le serveur ne peut pas enregistrer les données. Réessayez." }, { status: 500 });
   }
 }
 export const GET = handle;

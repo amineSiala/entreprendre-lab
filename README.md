@@ -4,7 +4,17 @@ Présentation interactive en français : un campus à nourrir, huit formes d’e
 
 La liste officielle fournie par l’enseignant est utilisée : création ex nihilo, essaimage, franchise, intrapreneuriat, reprise, entrepreneuriat social et solidaire, techno-entrepreneuriat et entrepreneuriat vert.
 
-## Démarrer
+## Jouer à distance (Netlify)
+
+Le dépôt privé est https://github.com/Amine-SIALA/entreprendre-lab. Le déploiement Netlify nécessite la connexion du propriétaire ; aucune URL publique n’est encore confirmée.
+
+Une fois publié, ouvrir le site, choisir **Sur téléphone**, créer une salle et envoyer le lien de participation aux amis. Ils peuvent utiliser leurs données mobiles ou un autre Wi-Fi. Le présentateur avance les questions depuis son navigateur ; les participants répondent et justifient sur le leur. Pour commenter les diapositives ensemble à distance, partager l’écran dans votre appel habituel.
+
+Le fichier `netlify.toml` active le mode en ligne. `@netlify/database` et les migrations de `netlify/database/migrations/` configurent Postgres. Chaque modification verrouille la ligne de la salle dans une transaction : les instances serveur partagent les réponses et le contrôle. La version hébergée ne bascule jamais vers un fichier local si la base est indisponible. Le mode en ligne génère les QR codes à partir de l’URL du site, indépendamment de l’adresse LAN utilisée en développement.
+
+Netlify Database nécessite un compte compatible avec les crédits Netlify. Les accès à la base restent côté serveur. Ne pas committer les identifiants ni `.env.local`. Les salles locales ne sont pas transférées automatiquement au site.
+
+## Démarrer localement
 
 Prérequis : Node.js 20.9 ou plus récent et npm. Vérification effectuée avec Node.js 24.20.0.
 
@@ -26,7 +36,7 @@ npm start
 
 Cela reste une installation locale. Aucun compte cloud ni identifiant Supabase n’est nécessaire.
 
-## Jouer sur téléphone
+## Jouer sur téléphone sur le réseau local
 
 1. Connecter l’ordinateur et les téléphones au même Wi-Fi, ou au même point d’accès.
 2. Trouver l’adresse IPv4 locale de l’ordinateur avec `ipconfig` — par exemple `192.168.1.20`.
@@ -46,13 +56,13 @@ Consulter [le guide des présentateurs](docs/presenter-cheatsheet.md) pour le d�
 
 ## Données et limites
 
-Les salles, pseudos, réponses et états sont enregistrés dans `.data/rehearsal.json` sur l’ordinateur serveur. `DEMO_DATA_DIR` permet de choisir un autre dossier. La sauvegarde est un fichier JSON avec écritures sérialisées pour **un seul processus Node** : ne pas utiliser plusieurs instances ou un hébergement à système de fichiers éphémère.
+En mode local, les salles, pseudos, réponses et états sont enregistrés dans `.data/rehearsal.json` sur l’ordinateur serveur. `DEMO_DATA_DIR` permet de choisir un autre dossier. La sauvegarde est un fichier JSON avec écritures sérialisées pour **un seul processus Node** : ne pas utiliser plusieurs instances ou un hébergement à système de fichiers éphémère.
 
 Un cookie HTTP-only de 30 jours contient une identité aléatoire ; seule son empreinte est conservée dans les salles. Ce mécanisme reconnaît un navigateur sur une origine donnée. Ce n’est pas un compte et il ne permet pas de récupérer une identité après suppression du cookie ou changement d’appareil. Le lien vers un compte, la récupération et les comptes permanents ne sont pas implémentés.
 
 Le participant peut demander la suppression de ses réponses et de sa participation à une salle depuis `/me`. Il n’y a pas de purge automatique des salles : pour effacer toute l’installation, arrêter le serveur puis supprimer son fichier `rehearsal.json`. Cela supprime toutes les salles de ce fichier. Voir aussi [la page de confidentialité](src/app/privacy/page.tsx).
 
-Le serveur arbitre la navigation, les réponses et la correction ; les navigateurs interrogent régulièrement son état. Le contrôle est réservé à un onglet du présentateur à la fois. Cette version sert à la répétition et à une classe sur réseau local ; l’hébergement partagé, l’authentification récupérable et les tests de charge restent à réaliser. Voir [l’état d’implémentation](docs/implementation-status.md).
+Le serveur arbitre la navigation, les réponses et la correction ; les navigateurs interrogent régulièrement son état. Le contrôle est réservé à un onglet du présentateur à la fois. Le stockage partagé Netlify est implémenté ; sa validation sur le site public reste à effectuer après connexion. L’authentification récupérable n’est pas implémentée. En ligne, les données sont conservées dans Postgres sans purge automatique ; chaque participant peut effacer sa participation depuis son bilan. Voir [l’état d’implémentation](docs/implementation-status.md).
 
 ## Développement et vérification
 
