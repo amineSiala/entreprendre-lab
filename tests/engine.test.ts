@@ -18,11 +18,11 @@ describe("authoritative presentation progression", () => {
 
   it("rejects answers at the deadline and reveals without a presenter command", () => {
     const session = openQuestion("launch");
-    const last = submit(session, studentA, "launch", { choice: 1, reason: 2 }, startedAt + 14_999);
+    const last = submit(session, studentA, "launch", { choice: 1, reason: 2 }, startedAt + 19_999);
     expect(last.rounds.launch.responses[studentA].feedback.xp).toBe(500);
-    expect(() => submit(session, studentA, "launch", { choice: 1, reason: 2 }, startedAt + 15_000)).toThrow(expect.objectContaining({ code: "CLOSED" }));
-    expect(expireRounds(last, startedAt + 14_999)).toBe(last);
-    const expired = expireRounds(last, startedAt + 15_000);
+    expect(() => submit(session, studentA, "launch", { choice: 1, reason: 2 }, startedAt + 20_000)).toThrow(expect.objectContaining({ code: "CLOSED" }));
+    expect(expireRounds(last, startedAt + 19_999)).toBe(last);
+    const expired = expireRounds(last, startedAt + 20_000);
     expect(expired.rounds.launch.state).toBe("revealed");
     expect(beats[expired.index].id).toBe("launch-results");
     expect(expireRounds(expired, startedAt + 30_000)).toBe(expired);
@@ -88,7 +88,7 @@ describe("saved answers and private feedback", () => {
     const closed = reveal(accepted);
     expect(submit(closed, studentA, "launch", answer)).toBe(closed);
     expect(closed.rounds.launch.responses[studentA].at).toBe(startedAt + 50);
-    expect(snapshot(closed, studentA, "student").xp).toBe(998);
+    expect(snapshot(closed, studentA, "student").xp).toBe(999);
   });
 
   it("rejects attempts to overwrite a saved answer", () => {

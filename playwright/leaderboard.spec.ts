@@ -13,7 +13,7 @@ test("projector rankings follow explanation, survive reload, and fit projectors"
     for (const [i, client] of clients.entries()) await client.post(`/api/rooms/${code}`, { data: { action: "join", nickname: i === 6 ? "Un pseudo très très long" : `Joueur ${i + 1}` } });
     await page.keyboard.press("ArrowRight");
     await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "opening-open");
-    await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "opening-results", { timeout: 22000 });
+    await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "opening-results", { timeout: 30000 });
     await expect(page.locator(".explanation-card")).toBeVisible();
     await expect(page.locator(".ranking-layout")).toHaveCount(0);
     await page.keyboard.press("ArrowRight");
@@ -57,7 +57,7 @@ test("projector rankings follow explanation, survive reload, and fit projectors"
       const answer = await client.post(`/api/rooms/${code}`, { data: { action: "answer", questionId: "launch", answer: i < 6 ? { choice: 1, reason: 2 } : { choice: 0, reason: 0 } } });
       expect(answer.ok()).toBe(true);
     }
-    await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "launch-results", { timeout: 22000 });
+    await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "launch-results", { timeout: 30000 });
     await page.keyboard.press("ArrowRight");
     await expect(page.locator(".ranking-roast h2")).toHaveText("Un pseudo très très long");
     await expect(page.locator(".podium-card").first().locator(".score-static")).not.toHaveText("0");

@@ -1,4 +1,4 @@
-> Création de salle : petit lien **Espace présentateur** en bas de l’accueil, puis mot de passe privé. Tous les défis, y compris le rappel, durent 15 secondes.
+> Création de salle : petit lien **Espace présentateur** en bas de l’accueil, puis mot de passe privé. Choix et votes : 20 secondes. Rappels écrits : 1 minute. Les réponses s’enregistrent automatiquement.
 
 # Guide de présentation
 
@@ -36,9 +36,9 @@ Objectif : comprendre les huit formes du cours, les reconnaître à partir d’i
 3. Fermer la question avec **→**, observer les résultats puis discuter de l’explication.
 4. Faire préciser pourquoi une proposition tentante ne correspond pas aux faits.
 
-Sur téléphone, chaque personne envoie sa propre réponse ; une réponse validée ne se remplace pas. Après l’explication, le classement cumulé et la taquinerie apparaissent sur le projecteur avec la flèche droite.
+Sur téléphone, toucher un choix ouvre les justifications ; toucher une justification enregistre la réponse. Les votes s’enregistrent au premier toucher. Les choix enregistrés ne se remplacent pas. Les rappels écrits se sauvegardent pendant la saisie et restent modifiables jusqu’à la clôture ; la dernière sauvegarde compte, même incomplète. Après l’explication, le classement cumulé et la taquinerie apparaissent sur le projecteur avec la flèche droite.
 
-Chaque question dure 15 secondes. À zéro, les réponses se verrouillent et les résultats apparaissent automatiquement. Une fermeture pendant les dix premières secondes déclenche un avertissement ; une seconde pression sur **→** confirme, **Échap** annule cette confirmation. Un changement de chapitre pendant une question ouverte est refusé : terminer d’abord cette question avec la flèche droite.
+Les choix et votes durent 20 secondes ; les rappels écrits durent 1 minute. À zéro, les réponses se verrouillent et les résultats apparaissent automatiquement. Une fermeture pendant les dix premières secondes déclenche un avertissement ; une seconde pression sur **→** confirme, **Échap** annule cette confirmation. Un changement de chapitre pendant une question ouverte est refusé : terminer d’abord cette question avec la flèche droite.
 
 ## Ce que mesurent les résultats
 

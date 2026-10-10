@@ -2,6 +2,17 @@
 
 Updated **10 October 2026**, user timezone **Africa/Lagos**.
 
+## Latest update — automatic answers and longer timers (10 October 2026)
+
+This supersedes earlier references to 15-second deadlines and immutable recall submissions.
+
+- All choice questions and unscored votes now allow **20 seconds**; both recall exercises (`mini`, `boss`) allow **60 seconds**. Server cutoff, both countdowns and speed scoring use each question’s duration. Correct answers remain worth 500–1,000 points based on server acceptance time; the halfway time is now 10 seconds for choices and 30 seconds for typing.
+- On phones, tapping a vote saves it immediately. For choice + reason, tapping the choice opens the reasons; tapping a reason saves the complete answer. Normal answer flows have no submit button. A failed choice save remains locked and offers an idempotent recovery retry.
+- Recall fields save automatically after a short typing pause and on blur, and remain editable until closure. Saves are serialized, failed saves retry, and only successful server acknowledgements show “Sauvegardé automatiquement”. Refresh restores the saved fields. The latest saved text (even incomplete or cleared) is used at automatic or manual closure. Recall points use the last changed save’s server timestamp; identical retries do not change that timestamp. Changed answers after closure are rejected.
+- The presenter-only lobby and leaderboard remain unchanged. Opening a typing question does not expose answer aliases or hints. Peer snapshots contain no personal recall text; scores and grading feedback remain hidden until reveal.
+- Implementation: `src/components/answer-editor.tsx`, updated student flow, recall save rules and private submission timestamp in the engine, question durations and timing copy. Existing answer API and room payload storage support the change without a DB migration.
+- Validation: lint, TypeScript, 61 unit/API/storage tests and production build passed. All nine current Playwright scenarios passed across the full run and focused reruns after adapting an alert locator and using answer-card taps in place of radio `.check()` assertions. Coverage includes direct vote/choice submission, reselecting the same choice after returning from reasons, three independent phones, autosave failure/retry and refresh/edit/erase recovery, a real 60-second recall expiry, late-edit rejection, the 20-second choice expiry, private results, 60 clients, lobby, leaderboard, keyboard and projector layouts. Ignored screenshot: `artifacts/typing-autosave-320.png`.
+
 ## Latest update — QR lobby and one-off classroom flow (10 October 2026)
 
 Published source commit `6948bb2` to the existing Netlify site; deployment `6aca32bd728c68adf831024c` reached **ready** with no error and the Next.js runtime present. Public homepage, stage and privacy routes returned 200. Live checks confirmed removed landing copy, QR instructions, lobby assets and presenter-auth rejection without credentials (401). The authenticated 60-player lobby rehearsal was local; no new hosted multiplayer room was created for this deployment.

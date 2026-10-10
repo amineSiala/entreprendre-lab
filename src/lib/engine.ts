@@ -57,18 +57,18 @@ export function submit(session: Session, actor: string, questionId: string, answ
   const round = Object.hasOwn(session.rounds, questionId) ? session.rounds[questionId] : undefined;
   const q = Object.hasOwn(questions, questionId) ? questions[questionId] : undefined;
   if (!round || !q) throw new RoomError(404, "Question introuvable.");
-  // An identical retry is safe even after closure; an accepted answer cannot be replaced.
+  // Choices are final; recall autosaves remain editable until the deadline.
   const previous = round.responses[actor];
   if (previous) {
     const sameAnswer = previous.answer.choice === answer.choice && previous.answer.reason === answer.reason
       && JSON.stringify(previous.answer.recall) === JSON.stringify(answer.recall);
-    if (!sameAnswer) throw new RoomError(409, "Votre réponse est déjà enregistrée et ne peut plus être modifiée.", "ALREADY_ANSWERED");
-    return session;
+    if (sameAnswer) return session;
+    if (q.kind !== "recall" || round.state !== "open") throw new RoomError(409, "Votre réponse est déjà enregistrée et ne peut plus être modifiée.", "ALREADY_ANSWERED");
   }
   if (round.state !== "open" || beats[session.index].questionId !== questionId || !beats[session.index].kind.endsWith("-open")) throw new RoomError(409, "Cette question est fermée.", "CLOSED");
-  if (now >= round.openedAt + q.seconds * 1000) throw new RoomError(409, "Les 15 secondes sont écoulées.", "CLOSED");
+  if (now >= round.openedAt + q.seconds * 1000) throw new RoomError(409, "Le temps de réponse est écoulé.", "CLOSED");
   if (q.kind === "recall") {
-    if (!answer.recall || answer.recall.length > (q.recallCount ?? 8) || !answer.recall.some(s => s.trim())) throw new RoomError(422, "Indiquez au moins une forme.");
+    if (!answer.recall || answer.recall.length > (q.recallCount ?? 8) || (!previous && !answer.recall.some(s => s.trim()))) throw new RoomError(422, "Indiquez au moins une forme.");
   } else {
     if (answer.choice === undefined || answer.choice < 0 || answer.choice >= q.options.length) throw new RoomError(422, "Choisissez une réponse.");
     if (q.reasons && (answer.reason === undefined || answer.reason < 0 || answer.reason >= q.reasons.length)) throw new RoomError(422, "Choisissez aussi une justification.");
@@ -107,7 +107,7 @@ export function snapshot(session: Session, actor: string, role: "host" | "studen
     const responses = Object.values(round.responses);
     state.round = { questionId: round.questionId, state: round.state, openedAt: round.openedAt, count: responses.length };
     const own = round.responses[actor];
-    if (own) state.round.submission = { answer: own.answer, ...(round.state === "revealed" ? { feedback: own.feedback } : {}) };
+    if (own) state.round.submission = { answer: own.answer, at: own.at, ...(round.state === "revealed" ? { feedback: own.feedback } : {}) };
     if (round.state === "revealed") {
       const key = keys[round.questionId];
       Object.assign(state.round, { explanation: key.explanation, takeaway: key.takeaway, correctChoice: key.choice, correctReason: key.reason });

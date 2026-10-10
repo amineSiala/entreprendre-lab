@@ -4,10 +4,11 @@ import { connectionHint, storageHint } from "@/lib/environment";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clock3, Eye, Flag, Lightbulb, LoaderCircle, LockKeyhole, Radio, RefreshCw, Send, Smartphone, Sparkles, Trash2, Trophy, Users, WifiOff } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clock3, Eye, Flag, Lightbulb, LoaderCircle, LockKeyhole, Radio, RefreshCw, Smartphone, Sparkles, Trash2, Trophy, Users, WifiOff } from "lucide-react";
 import { api, Brand, DemoBadge, LocalNotice, Modal } from "@/components/common";
+import { AnswerEditor } from "@/components/answer-editor";
 import { questions } from "@/content/questions.fr";
-import type { Answer, FormId, Question, RoomState, SafeRound } from "@/types/domain";
+import type { FormId, Question, RoomState, SafeRound } from "@/types/domain";
 import "./student.css";
 
 const storageKey = "elab_student";
@@ -44,7 +45,7 @@ function useRoom(code: string | undefined) {
     setRoom(previous => {
       if (previous?.code === next.code && previous.version > next.version) return previous;
       // A poll initiated before an answer must never erase its acknowledgement.
-      if (previous?.code === next.code && previous.version === next.version && previous.round?.questionId === next.round?.questionId && previous.round?.submission && next.round && !next.round.submission) {
+      if (previous?.code === next.code && previous.version === next.version && previous.round?.questionId === next.round?.questionId && previous.round?.submission && next.round && (!next.round.submission || previous.round.submission.at > next.round.submission.at)) {
         return { ...next, round: { ...next.round, submission: previous.round.submission } };
       }
       return next;
@@ -102,7 +103,7 @@ export function StudentJoin({ code: rawCode }: { code: string }) {
     <section className="student-join-card">
       <div className="student-ticket-art" aria-hidden="true"><span className="student-art-star">✳</span><Smartphone size={66} strokeWidth={1.7} /><span className="student-art-dot">!</span></div>
       <p className="eyebrow">VOTRE PLACE DANS LA PARTIE</p><h1>Le campus<br />compte sur vous<span>.</span></h1>
-      <p className="student-intro">Observez les situations, faites un choix et défendez votre raisonnement. 15 secondes pour répondre. Plus vite et juste : jusqu’à 1 000 points.</p>
+      <p className="student-intro">Touchez un choix, puis sa justification : votre réponse est enregistrée automatiquement. 20 secondes pour les choix, 1 minute pour les réponses écrites. Plus vite et juste : jusqu’à 1 000 points.</p>
       {valid ? <form className="student-join-form" onSubmit={join}>
         <label htmlFor="student-nickname">Comment vous appelle-t-on ?</label>
         <input id="student-nickname" placeholder="Votre pseudo" minLength={2} maxLength={24} value={nickname} onChange={event => setNickname(event.target.value)} autoComplete="nickname" required disabled={busy} aria-describedby="nickname-hint" />
@@ -126,40 +127,6 @@ function Timer({ question, openedAt }: { question: Question; openedAt: number })
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const remaining = Math.min(question.seconds, Math.max(0, question.seconds - Math.floor((now - openedAt) / 1000)));
   return <div className="student-timer"><Clock3 size={15} /><span>{remaining > 0 ? `${remaining} s` : "Temps écoulé"}</span><span className="student-timer-hint">Clôture automatique.</span></div>;
-}
-
-function QuestionEditor({ question, round, code, accept }: { question: Question; round: SafeRound; code: string; accept: (next: RoomState) => void }) {
-  const [choice, setChoice] = useState<number>(), [reason, setReason] = useState<number>();
-  const [step, setStep] = useState(1), [recall, setRecall] = useState<string[]>(() => Array(question.recallCount ?? 0).fill(""));
-  const [attempt, setAttempt] = useState<Answer | null>(null), [busy, setBusy] = useState(false), [error, setError] = useState(""), [closed, setClosed] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 200); return () => clearInterval(timer); }, []);
-  const timedOut = now >= round.openedAt + question.seconds * 1000;
-  const locked = busy || attempt !== null || timedOut;
-  async function submit(event: React.FormEvent) {
-    event.preventDefault(); if (busy || closed || timedOut) return;
-    const answer = attempt ?? (question.kind === "recall" ? { recall } : { choice, ...(question.reasons ? { reason } : {}) });
-    setAttempt(answer); setBusy(true); setError("");
-    try { accept(await api<RoomState>(code, { action: "answer", questionId: question.id, answer })); }
-    catch (error) { setError(errorMessage(error)); if ((error as Error & { code?: string }).code === "CLOSED") setClosed(true); }
-    finally { setBusy(false); }
-  }
-  const showingReasons = step === 2 && Boolean(question.reasons);
-  const ready = question.kind === "recall" ? recall.some(value => value.trim()) : showingReasons ? reason !== undefined : choice !== undefined;
-  return <section className="student-question">
-    <div className="student-question-top"><p className="eyebrow">{question.tag}</p><Timer question={question} openedAt={round.openedAt} /></div>
-    <h1>{question.title}</h1><p className="student-scenario">{question.scenario}</p>
-    <form onSubmit={submit}>
-      {question.kind === "recall" ? <><h2>{question.prompt}</h2><p className="student-field-hint">Sans notes ni liste. Vous pouvez envoyer une réponse incomplète.</p><div className="student-recall-fields">{recall.map((value, index) => <label key={index}><span>{String(index + 1).padStart(2, "0")}</span><span className="sr-only">Forme {index + 1}</span><input aria-label={`Forme ${index + 1}`} value={value} maxLength={100} autoComplete="off" autoCorrect="off" spellCheck={false} placeholder={`Forme ${index + 1}`} disabled={locked} onChange={event => setRecall(previous => previous.map((old, item) => item === index ? event.target.value : old))} /></label>)}</div></> : <>
-        {question.reasons && <div className="student-steps" aria-label={`Étape ${step} sur 2`}><span className={step === 1 ? "active" : "complete"}><b>{step === 2 ? <Check size={12} /> : "1"}</b>Je choisis</span><span /><span className={step === 2 ? "active" : ""}><b>2</b>Je justifie</span></div>}
-        <fieldset className="student-options"><legend>{showingReasons ? "Quel raisonnement soutient votre choix ?" : question.prompt}</legend>{(showingReasons ? question.reasons! : question.options).map((option, index) => <label key={`${step}-${index}`} className={`student-option student-option-${index} ${(showingReasons ? reason : choice) === index ? "selected" : ""} ${locked ? "locked" : ""}`}><input type="radio" name={showingReasons ? "reason" : "choice"} value={index} checked={(showingReasons ? reason : choice) === index} onChange={() => showingReasons ? setReason(index) : setChoice(index)} disabled={locked} /><span className="student-option-symbol" aria-hidden="true">{["▲", "◆", "●", "■"][index]}</span><span>{option}</span><span className="student-option-check" aria-hidden="true">{(showingReasons ? reason : choice) === index && <Check size={17} />}</span></label>)}</fieldset>
-        {showingReasons && <div className="student-choice-summary"><span>Votre choix</span><p>{choice !== undefined && question.options[choice]}</p>{!locked && <button type="button" onClick={() => setStep(1)}><ArrowLeft size={15} /> Modifier mon choix</button>}</div>}
-      </>}
-      {error && <div className="student-answer-error" role="alert"><strong>{closed ? "Le défi est terminé." : "Envoi non confirmé."}</strong><p>{error}</p>{!closed && <p>Votre réponse reste verrouillée pendant la vérification. Réessayez : elle ne sera comptée qu’une fois.</p>}</div>}
-      {question.reasons && step === 1 ? <button type="button" className="button primary student-submit" disabled={!ready || locked} onClick={() => setStep(2)}>Je justifie mon choix <ArrowRight size={18} /></button> : <button className="button primary student-submit" type="submit" disabled={!ready || busy || closed || timedOut}>{busy ? <LoaderCircle className="student-spin" size={18} /> : attempt ? <RefreshCw size={18} /> : <Send size={18} />}{busy ? "Envoi en cours…" : attempt ? "Vérifier et réessayer" : question.kind === "recall" ? "Envoyer mes réponses" : question.kind === "vote" ? "Envoyer mon avis" : "Valider mon raisonnement"}</button>}
-      <p className="student-submit-note"><LockKeyhole size={12} /> Une fois envoyée, la réponse ne peut plus être modifiée.</p>
-    </form>
-  </section>;
 }
 
 function Submitted({ question, round }: { question: Question; round: SafeRound }) {
@@ -186,7 +153,7 @@ export function StudentRoom({ code: rawCode }: { code: string }) {
     {error && <ConnectionNotice error={error} retry={() => void refresh()} />}
     {!room ? error ? <section className="student-card student-empty"><Radio size={36} /><h1>Retrouvons votre salle.</h1><p>Vérifiez le code et votre connexion. {connectionHint}</p><Link href={`/join/${code}`} className="button primary">Rejoindre la salle <ArrowRight size={17} /></Link><Link href="/" className="student-back">Retour à l’accueil</Link></section> : <div className="student-loading" role="status"><LoaderCircle className="student-spin" size={28} /><p>Connexion à la partie…</p></div> : room.role === "host" ? <section className="student-card student-empty"><Users size={35} /><h1>Vous êtes le présentateur.</h1><p>Pour participer, ouvrez ce lien sur un autre appareil ou dans une fenêtre privée.</p><Link className="button primary" href={`/host/session/${code}/stage`}>Retour au projecteur <ArrowRight size={18} /></Link></section> : <>
       <div className="student-player-strip"><span><span className="student-avatar">{saved?.code === code ? saved.nickname.slice(0, 1).toUpperCase() : "✳"}</span><b className="student-player-name">{saved?.code === code ? saved.nickname : "Dans la partie"}</b></span><span><Sparkles size={15} />{room.xp ?? 0} points</span></div>
-      {room.ended ? <section className="student-card student-waiting"><div className="student-success-icon"><Trophy size={38} /></div><p className="eyebrow">PARCOURS TERMINÉ</p><h1>Huit formes.<br /><span>À vous d’entreprendre.</span></h1><p>Retrouvez vos points et les formes reconnues ou rappelées dans votre carnet personnel.</p><Link href="/me" className="button primary">Voir mon carnet <ArrowRight size={17} /></Link></section> : !round || !question ? <Waiting nickname={saved?.code === code ? saved.nickname : undefined} /> : round.state === "revealed" ? <Revealed key={round.questionId} question={question} round={round} /> : round.submission ? <Submitted question={question} round={round} /> : <QuestionEditor key={round.questionId} question={question} round={round} code={code} accept={accept} />}
+      {room.ended ? <section className="student-card student-waiting"><div className="student-success-icon"><Trophy size={38} /></div><p className="eyebrow">PARCOURS TERMINÉ</p><h1>Huit formes.<br /><span>À vous d’entreprendre.</span></h1><p>Retrouvez vos points et les formes reconnues ou rappelées dans votre carnet personnel.</p><Link href="/me" className="button primary">Voir mon carnet <ArrowRight size={17} /></Link></section> : !round || !question ? <Waiting nickname={saved?.code === code ? saved.nickname : undefined} /> : round.state === "revealed" ? <Revealed key={round.questionId} question={question} round={round} /> : round.submission && question.kind !== "recall" ? <Submitted question={question} round={round} /> : <AnswerEditor key={round.questionId} question={question} round={round} code={code} accept={accept} timer={<Timer question={question} openedAt={round.openedAt} />} />}
     </>}
   </StudentShell>;
 }

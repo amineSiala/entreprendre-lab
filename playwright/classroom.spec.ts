@@ -70,8 +70,7 @@ test("three independent phones persist answers, reasoning and private recall acr
   }
   await next(page, "opening-open");
   for (let i = 0; i < phones.length; i++) {
-    await phones[i].getByRole("radio").nth(i % 2).check();
-    await phones[i].getByRole("button", { name: "Envoyer mon avis" }).click();
+    await phones[i].locator(".student-option").nth(i % 2).click();
     await expect(phones[i].getByText("RÉPONSE ENREGISTRÉE", { exact: true })).toBeVisible();
   }
   await next(page, "opening-results");
@@ -86,10 +85,8 @@ test("three independent phones persist answers, reasoning and private recall acr
   for (const beat of beats.slice(3, 8)) await next(page, beat.id);
   for (let i = 0; i < phones.length; i++) {
     await expect(phones[i].getByRole("radio")).toHaveCount(4);
-    await phones[i].getByRole("radio").nth(1).check();
-    await phones[i].getByRole("button", { name: "Je justifie mon choix" }).click();
-    await phones[i].getByRole("radio").nth(i === 0 ? 2 : 0).check();
-    await phones[i].getByRole("button", { name: "Valider mon raisonnement" }).click();
+    await phones[i].locator(".student-option").nth(1).click();
+    await phones[i].locator(".student-option").nth(i === 0 ? 2 : 0).click();
     await expect(phones[i].getByText("RÉPONSE ENREGISTRÉE", { exact: true })).toBeVisible();
   }
   await next(page, "launch-results");
@@ -105,23 +102,19 @@ test("three independent phones persist answers, reasoning and private recall acr
   await phones[0].getByLabel("Forme 2", { exact: true }).fill("essaimage");
   await phones[0].getByLabel("Forme 3", { exact: true }).fill("intrapreneuriat");
   await phones[0].screenshot({ path: "artifacts/phone-recall-320.png", fullPage: true, animations: "disabled" });
-  await phones[0].getByRole("button", { name: "Envoyer mes réponses" }).click();
-  await expect(phones[0].getByText("RÉPONSE ENREGISTRÉE", { exact: true })).toBeVisible();
+  await expect(phones[0].getByText("Sauvegardé automatiquement", { exact: true })).toBeVisible();
   await next(page, "mini-results");
   await expect(phones[0].getByRole("heading", { name: "3 sur 3 retrouvées." })).toBeVisible();
   await expect(page.getByText("1 réponse(s). Répartition masquée en dessous de 3 participants.")).toBeVisible();
   for (const beat of beats.slice(19, 32)) await next(page, beat.id);
   const recalled = ["Création ex nihilo", "Essaimage", "Franchise", "Intrapreneuriat", "Reprise d’entreprise", "Social et solidaire", "Techno-entrepreneuriat", "Vert"];
   for (let i = 0; i < recalled.length; i++) await phones[0].getByLabel(`Forme ${i + 1}`, { exact: true }).fill(recalled[i]);
-  await phones[0].getByRole("button", { name: "Envoyer mes réponses" }).click();
-  await expect(phones[0].getByText("RÉPONSE ENREGISTRÉE", { exact: true })).toBeVisible();
+  await expect(phones[0].getByText("Sauvegardé automatiquement", { exact: true })).toBeVisible();
   await next(page, "boss-results");
   await expect(phones[0].getByRole("heading", { name: "8 sur 8 retrouvées." })).toBeVisible();
   await next(page, "transfer-open");
-  await phones[0].getByRole("radio").nth(0).check();
-  await phones[0].getByRole("button", { name: "Je justifie mon choix" }).click();
-  await phones[0].getByRole("radio").nth(1).check();
-  await phones[0].getByRole("button", { name: "Valider mon raisonnement" }).click();
+  await phones[0].locator(".student-option").nth(0).click();
+  await phones[0].locator(".student-option").nth(1).click();
   await expect(phones[0].getByText("RÉPONSE ENREGISTRÉE", { exact: true })).toBeVisible();
   await next(page, "transfer-results");
   await expect(phones[0].getByRole("heading", { name: "Bien raisonné !" })).toBeVisible();
@@ -185,7 +178,7 @@ test("60 simulated API participants can join and save exactly one answer each", 
   } finally { await Promise.all(clients.map(client => client.dispose())); }
 });
 
-test("visitors join, presenter authentication gates creation, and rounds expire after 15 seconds", async ({ page }) => {
+test("visitors join, presenter authentication gates creation, and rounds expire after 20 seconds", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Rejoindre une salle", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Créer la salle", exact: true })).toHaveCount(0);
@@ -197,7 +190,7 @@ test("visitors join, presenter authentication gates creation, and rounds expire 
   await page.getByRole("button", { name: "Créer la salle", exact: true }).click();
   await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "welcome");
   await next(page, "opening-open");
-  await expect(page.locator(".question-timer")).toContainText(/00:1[345]/);
-  await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "opening-results", { timeout: 20_000 });
+  await expect(page.locator(".question-timer")).toContainText(/00:(20|19|18)/);
+  await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "opening-results", { timeout: 30_000 });
   await expect(page.getByText("Réponses fermées", { exact: true })).toBeVisible();
 });

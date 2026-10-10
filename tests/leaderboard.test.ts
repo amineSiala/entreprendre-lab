@@ -28,7 +28,7 @@ describe("projector leaderboard", () => {
     let session = submit(openQuestion("launch"), studentA, "launch", { choice: 1, reason: 2 }, startedAt);
     expect(snapshot(session, "presenter", "host").leaderboard).toBeUndefined();
     session = openQuestion("social", reveal(session));
-    session = submit(session, studentB, "social", { choice: 3, reason: 0 }, startedAt + 7500);
+    session = submit(session, studentB, "social", { choice: 3, reason: 0 }, startedAt + 10000);
     session = reveal(session);
     const board = snapshot(session, "presenter", "host").leaderboard!;
     expect(board.top.map(row => [row.nickname, row.points, row.previousPoints, row.rank])).toEqual([

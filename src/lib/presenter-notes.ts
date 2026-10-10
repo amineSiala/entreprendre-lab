@@ -33,7 +33,7 @@ export const presenterNotes: Record<string, string> = {
   "axes-results": "On peut reprendre une entreprise et la réorienter vers l’environnement.",
   "jury-open": "Demandez une raison et une limite. L’option interne exploite les moyens disponibles mais exige une validation.",
   "jury-results": "Faites défendre deux options différentes avec les contraintes du scénario.",
-  "boss-open": "15 secondes, puis clôture automatique. Aucun menu de formes ni nom de personnage pendant la réponse.",
+  "boss-open": "1 minute, puis clôture automatique. Aucun menu de formes ni nom de personnage pendant la réponse.",
   "boss-results": "Le rappel est distinct des points. À moins de trois réponses individuelles, les détails restent privés.",
   "transfer-open": "Ce cas quitte la restauration. Trois indices vérifient le transfert des concepts.",
   "transfer-results": "Société distincte soutenue = essaimage ; innovation centrale = techno ; finalité environnementale = vert.",

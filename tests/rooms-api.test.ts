@@ -69,19 +69,40 @@ async function open(browser: Browser, code: string, controller: string, question
 }
 
 describe("room API ownership and durable classroom flow", () => {
+  it("persists editable recall autosaves privately and closes them after one minute", async () => {
+    const host: Browser = {}, student: Browser = {}, peer: Browser = {};
+    const code = await create(host);
+    await request(student, code, { action: "join", nickname: "Writer" });
+    await request(peer, code, { action: "join", nickname: "Peer" });
+    const controller = await control(host, code);
+    const opened = await open(host, code, controller, "mini");
+    await request(student, code, { action: "answer", questionId: "mini", answer: { recall: ["ex"] } });
+    vi.spyOn(Date, "now").mockReturnValue(opened.round!.openedAt + 30000);
+    const saved = await request(student, code, { action: "answer", questionId: "mini", answer: { recall: ["ex nihilo", "essaimage", "franchise"] } });
+    expect(saved.response.status).toBe(200);
+    expect(saved.payload.round?.submission?.feedback).toBeUndefined();
+    expect((await request(peer, code)).payload.round?.submission).toBeUndefined();
+    const restored = await request({ token: student.token }, code);
+    expect(restored.payload.round?.submission?.answer.recall).toEqual(["ex nihilo", "essaimage", "franchise"]);
+    vi.spyOn(Date, "now").mockReturnValue(opened.round!.openedAt + 60000);
+    const closed = await request(student, code);
+    expect(closed.payload.round?.state).toBe("revealed");
+    expect(closed.payload.xp).toBe(750);
+    expect((await request(student, code, { action: "answer", questionId: "mini", answer: { recall: ["vert"] } })).response.status).toBe(409);
+  });
   it("cannot create a room by bypassing the presenter dialog", async () => {
     expect((await request({}, "", { action: "create", mode: "phones" })).response.status).toBe(401);
     expect((await request({}, "", { action: "create", mode: "phones", password: "incorrect" })).response.status).toBe(401);
     await create({});
   });
 
-  it("automatically reveals at 15 seconds and rejects a late answer", async () => {
+  it("automatically reveals at 20 seconds and rejects a late answer", async () => {
     const host: Browser = {}, student: Browser = {};
     const code = await create(host);
     await request(student, code, { action: "join", nickname: "Timer" });
     const controller = await control(host, code);
     const opened = await open(host, code, controller);
-    vi.spyOn(Date, "now").mockReturnValue(opened.round!.openedAt + 15_000);
+    vi.spyOn(Date, "now").mockReturnValue(opened.round!.openedAt + 20_000);
     const current = await request(student, code);
     expect(current.payload.round?.state).toBe("revealed");
     expect(beats[current.payload.index!].id).toBe("launch-results");
