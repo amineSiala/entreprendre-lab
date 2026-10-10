@@ -37,3 +37,11 @@ Sur cette exécution en développement, via l’adresse de boucle locale : inscr
 Utiliser le véritable projecteur et deux téléphones physiques au minimum. Vérifier la lisibilité depuis le fond de la salle, le scan du QR, les règles du Wi-Fi et le pare-feu. Répéter le déroulé à voix haute pour ajuster l’objectif de 27 minutes : il n’est pas imposé par un minuteur.
 
 Les comptes récupérables, Supabase, le déploiement Internet, le fonctionnement multi-processus et les règles de sécurité d’un service hébergé ne font pas partie de cette validation.
+
+## Mise à jour du 10 octobre 2026 — parties chronométrées
+
+55 tests unitaires/API/Postgres/authentification passent ; six scénarios Playwright vérifient le parcours, trois joueurs, 60 participants simulés, les reprises, le mot de passe et la clôture automatique. Lint et compilation de production passent.
+
+Sur https://entreprendre-lab.netlify.app : création sans mot de passe ou avec un mot de passe incorrect refusée ; création autorisée avec le secret configuré. Sur un même défi, les réponses correctes rapide et plus lente ont obtenu 990 et 931 points ; la mauvaise réponse et l’absence de réponse ont obtenu 0. Après 15 secondes, résultats révélés, réponse tardive refusée, répétition d’un envoi sans points supplémentaires. Accueil et résultat inspectés sur un écran mobile de 390 px. Les participations de test ont été supprimées.
+
+Le secret Netlify PRESENTER_PASSWORD_HASH est configuré explicitement dans le contexte production ; un secret ne peut pas être créé avec le contexte all incluant le développement. Le dépôt contient uniquement le nom de cette variable, jamais le mot de passe ni sa valeur.
