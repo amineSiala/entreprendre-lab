@@ -2,6 +2,15 @@
 
 Updated **10 October 2026**, user timezone **Africa/Lagos**.
 
+## Latest update — QR lobby and one-off classroom flow (10 October 2026)
+
+- Create a fresh room, project its first slide, let students scan the QR and choose nicknames, then click **Commencer** or press Right when the class is ready. The lobby never starts automatically or starts a question deadline while waiting.
+- The first slide displays joined nicknames with animated colorful cards, a live participant count and a large QR code. The roster scrolls for larger classes and respects reduced-motion preferences. Nicknames are included only in host snapshots at the first slide; participant snapshots do not receive the roster. Leaving/deleting a membership removes its nickname.
+- Removed the homepage's saved-room resume link and saving new host rooms to `elab_last_room`. The homepage no longer displays **27′ objectif de séance** or **Imaginé pour apprendre ensemble ↗**. Join copy emphasizes scanning the projected QR; entering a code remains a fallback.
+- This is a one-off classroom experience, without a returning-host prompt. Room storage and refresh recovery still support the active presentation; no automatic deletion or retention change was requested.
+- Implementation: `src/components/lobby.tsx`, `lobby.css`, host-only `lobbyParticipants` and updated homepage/privacy copy. Existing deck indices and scoring are preserved.
+- Validation: lint, TypeScript, 58 unit/API/storage tests and production build passed. Two relevant Playwright scenarios passed: all 36 deck beats and the QR lobby with 60 participants. Checked 1920×1080, 1366×768 and 1024×768; roster arrival/removal, no automatic start, host-only roster, refresh recovery and explicit **Commencer** were verified. Ignored screenshots: `artifacts/lobby-1920.png`, `lobby-1366.png`, `lobby-1024.png`.
+
 ## Latest published update — projector leaderboard (10 October 2026)
 
 This update supersedes references below to team play and the absence of rankings. Source commit `46fe768` was pushed to `amineSiala/entreprendre-lab` and published to the existing Netlify site. Deployment `6aca2c7644ae06420b06f6c1` reached **ready** with no error and the Next.js server runtime present. Live homepage, privacy and stage routes returned HTTP 200; the stage bundles contain the new leaderboard; team creation returns 422; phone creation without presenter credentials remains rejected with 401. A new authenticated multiplayer session was not rehearsed on production during deployment; the functional browser rehearsal below was local.

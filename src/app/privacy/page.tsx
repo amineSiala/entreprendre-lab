@@ -20,7 +20,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2>Ce que la classe voit</h2>
-          <p>Le projecteur affiche le nombre de participants et des résultats collectifs après la fermeture de la question. En mode téléphone, les répartitions sont masquées lorsqu’il y a moins de trois réponses. Votre réponse personnelle et votre bilan restent dans votre espace.</p>
+          <p>Avant le début de la présentation, les pseudos des participants apparaissent dans la salle d’attente sur le projecteur. Le présentateur attend que la classe ait rejoint, puis lance la partie. Le projecteur affiche ensuite des résultats collectifs après la fermeture de la question. Les répartitions sont masquées lorsqu’il y a moins de trois réponses. Votre réponse personnelle et votre bilan restent dans votre espace.</p>
           <p>Après chaque explication, le projecteur affiche les pseudos et points cumulés des trois premiers et des trois derniers, avec une taquinerie sur la performance à la dernière place. Ce classement n’est pas envoyé aux téléphones des participants.</p>
         </section>
 

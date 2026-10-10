@@ -7,6 +7,7 @@ Objectif : comprendre les huit formes du cours, les reconnaître à partir d’i
 ## Avant la séance
 
 - Ouvrir le site et créer une salle depuis « Espace présentateur ». La participation se fait sur téléphone.
+- Projeter la première diapositive : les étudiants scannent le QR code et leurs pseudos apparaissent dans la salle d’attente. Quand tout le monde est arrivé, cliquer sur **Commencer** ou appuyer sur **→**. La partie ne démarre pas automatiquement.
 - Pour les téléphones, vérifier le Wi-Fi et le QR code avec un autre appareil avant l’arrivée de la classe. Le QR doit pointer vers l’adresse réseau de l’ordinateur, jamais vers `localhost`.
 - Garder un seul onglet de pilotage et conserver les cookies du navigateur présentateur.
 - Tester les flèches, le plein écran et la connexion d’un téléphone.

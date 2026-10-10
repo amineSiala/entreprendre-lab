@@ -82,6 +82,7 @@ export function snapshot(session: Session, actor: string, role: "host" | "studen
   const round = beat.questionId ? session.rounds[beat.questionId] : undefined;
   const state: RoomState = { id: session.id, code: session.code, mode: "phones", index: session.index, version: session.version, participants: Object.keys(session.members).length, role, ended: beat.kind === "conclusion" };
   if (role === "host") {
+    if (beat.kind === "title") state.lobbyParticipants = Object.values(session.members).sort((a, b) => a.joinedAt - b.joinedAt).map(member => member.nickname);
     state.canControl = Boolean(session.controller && session.controller.id === controller && session.controller.until > Date.now());
     state.presenterNote = presenterNotes[beat.id];
     state.leaderboardVisible = !!session.leaderboardVisible;

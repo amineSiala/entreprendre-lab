@@ -3,6 +3,15 @@ import { move, snapshot, submit } from "@/lib/engine";
 import { openQuestion, reveal, sessionFixture, startedAt, studentA, studentB } from "./room-fixtures";
 
 describe("projector leaderboard", () => {
+  it("shows lobby nicknames only to the host before the presentation starts", () => {
+    const session = sessionFixture();
+    expect(snapshot(session, "presenter", "host").lobbyParticipants).toEqual(["Alice", "Bilal", "Camille"]);
+    expect(snapshot(session, studentA, "student").lobbyParticipants).toBeUndefined();
+    expect(snapshot(openQuestion("opening", session), "presenter", "host").lobbyParticipants).toBeUndefined();
+    delete session.members[studentB];
+    expect(snapshot(session, "presenter", "host").lobbyParticipants).toEqual(["Alice", "Camille"]);
+    expect(JSON.stringify(snapshot(session, "presenter", "host").lobbyParticipants)).not.toContain(studentA);
+  });
   it("adds a persisted arrow step after explanation, with back and jump support", () => {
     const explained = reveal(openQuestion("launch"));
     const podium = move(explained, explained.version, 1);
