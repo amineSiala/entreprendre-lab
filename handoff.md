@@ -1,3 +1,5 @@
+> GitHub — compte actuel : **amineSiala**, dépôt privé https://github.com/amineSiala/entreprendre-lab. Le projet local utilise ce compte pour ses prochains pushes. Le site Netlify reste https://entreprendre-lab.netlify.app.
+
 > Dernière évolution — 10 octobre 2026 : accueil centré sur « Rejoindre une salle » ; création via « Espace présentateur » avec vérification serveur et secret Netlify. Tous les défis durent 15 secondes et se ferment automatiquement. Choix + justification corrects : 500–1 000 points selon la rapidité ; erreur/hors délai : 0 ; votes : 0 ; rappel : proportion de formes correctes × score de rapidité. Ces règles remplacent les anciens points de participation et chronos indicatifs ci-dessous. Le mot de passe n’est jamais enregistré dans ce dépôt.
 
 # handoff.md — Entreprendre.Lab
