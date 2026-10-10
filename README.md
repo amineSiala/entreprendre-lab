@@ -8,7 +8,7 @@ La liste officielle fournie par l’enseignant est utilisée : création ex nihi
 
 **Site public : https://entreprendre-lab.netlify.app**
 
-Dépôt privé : https://github.com/amineSiala/entreprendre-lab. Déploiement effectué via le serveur MCP officiel de Netlify le 10 octobre 2026. Le site utilise Postgres et le runtime Next.js de Netlify. Les publications actuelles sont des exports du code committé envoyés via MCP ; les pushes GitHub ne déclenchent pas encore de déploiement automatique.
+Dépôt public : https://github.com/amineSiala/entreprendre-lab. Déploiement effectué via le serveur MCP officiel de Netlify le 10 octobre 2026. Le site utilise Postgres et le runtime Next.js de Netlify. Les publications actuelles sont des exports du code committé envoyés via MCP ; les pushes GitHub ne déclenchent pas encore de déploiement automatique.
 
 Ouvrir le site, cliquer sur le petit lien **Espace présentateur** en bas de page, saisir le mot de passe privé, choisir **Sur téléphone**, puis créer une salle et envoyer le lien de participation aux amis. Ils peuvent utiliser leurs données mobiles ou un autre Wi-Fi. Le présentateur avance les questions depuis son navigateur ; les participants répondent et justifient sur le leur. Pour commenter les diapositives ensemble à distance, partager l’écran dans votre appel habituel.
 
