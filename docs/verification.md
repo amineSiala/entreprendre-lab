@@ -5,7 +5,7 @@
 - All nine Playwright scenarios passed in one uninterrupted run (4.4 minutes). The full 47-beat deck fits three projector sizes. The pitch rehearsal used four independent phones, including 320 px and a late audience member, and exercised reassignment, refresh, failed save/retry, rating edits, hidden results, all three pitches, 4,900/7,000/0 bonuses, rankings and the closing video.
 - Screenshots inspected: artifacts/pitch-teams.png and artifacts/pitch-results.png; phone screenshots also saved. These browser simulations do not replace testing physical classroom devices.
 - The NetlifyDB PGlite adapter shares one PostgreSQL session across sockets. Its test pool is limited to one connection to prevent interleaved BEGIN/COMMIT operations. These tests verify storage behavior; cross-worker production isolation relies on the actual Postgres FOR UPDATE lock.
-- Deployment checks pending at this checkpoint; see the latest handoff for publication details.
+- Published source 7f9d807 in Netlify deployment 6acbe632b353572cd55b783a, ready without errors. Live routes and team-control/rating bundles returned 200; missing presenter credentials 401; retired-room access 410; video range 206 and sound-enabled playback worked in Edge. Cleanup remains scheduled every five minutes. Authenticated room creation and the full hosted pitch round were not repeated; that rehearsal was local. See the latest handoff for details.
 
 ---
 
