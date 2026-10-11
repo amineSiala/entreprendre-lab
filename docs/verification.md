@@ -4,7 +4,7 @@
 - Migration cases cover revision-1/2/3 lobby, stories, quizzes, recall, pitch, synthesis and conclusion positions. Scores, answers, IDs, teams and votes are preserved; old synthesis rooms land on the new reveal.
 - The main browser run passed eight scenarios and found a roadmap footer overflow at 1366×768. Heading line-height and spacing were corrected. The dedicated three-projector roadmap check and final full-50-slide rerun both pass. Ten browser scenarios passed across the main run and focused layout reruns, not one uninterrupted green run.
 - The new checks cover hidden media before reveal, roadmap without company spoilers, the 680-million teaser, local cofounder/coat/3M images, both video players, sound enabled, keyboard control isolation, pause on exit, refresh, QR-to-roadmap start and cumulative pitch scores.
-- Screenshots inspected under artifacts/: roadmap, InstaDeep reveal, Dyson reveal, Empowerment Plan and 3M illustration. These are browser simulations, not physical classroom devices. See the latest handoff for final publication status.
+- Screenshots inspected under artifacts/: roadmap, InstaDeep reveal, Dyson reveal, Empowerment Plan and 3M illustration. These are browser simulations, not physical classroom devices. Published source 2c2837e in Netlify deployment 6acbfc9fb65498733533c94a, ready without errors. Live bundles contain the new sequence; all supplied WebP assets/credits return 200; unauthenticated creation 401; retired-room access 410. Both video range requests return 206 and Edge played both with sound enabled and no media error. Authenticated classroom and upgrade tests were local. See the latest handoff for details.
 
 ---
 
