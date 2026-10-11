@@ -7,13 +7,13 @@ describe("projector leaderboard", () => {
     const session = sessionFixture();
     expect(snapshot(session, "presenter", "host").lobbyParticipants).toEqual(["Alice", "Bilal", "Camille"]);
     expect(snapshot(session, studentA, "student").lobbyParticipants).toBeUndefined();
-    expect(snapshot(openQuestion("opening", session), "presenter", "host").lobbyParticipants).toBeUndefined();
+    expect(snapshot(openQuestion("partners", session), "presenter", "host").lobbyParticipants).toBeUndefined();
     delete session.members[studentB];
     expect(snapshot(session, "presenter", "host").lobbyParticipants).toEqual(["Alice", "Camille"]);
     expect(JSON.stringify(snapshot(session, "presenter", "host").lobbyParticipants)).not.toContain(studentA);
   });
   it("adds a persisted arrow step after explanation, with back and jump support", () => {
-    const explained = reveal(openQuestion("launch"));
+    const explained = reveal(openQuestion("individual"));
     const podium = move(explained, explained.version, 1);
     expect(podium.index).toBe(explained.index);
     expect(podium.leaderboardVisible).toBe(true);
@@ -25,10 +25,10 @@ describe("projector leaderboard", () => {
   });
 
   it("uses revealed cumulative points, retains nonresponders and excludes identities from phones", () => {
-    let session = submit(openQuestion("launch"), studentA, "launch", { choice: 1, reason: 2 }, startedAt);
+    let session = submit(openQuestion("individual"), studentA, "individual", { choice: 1, reason: 2 }, startedAt);
     expect(snapshot(session, "presenter", "host").leaderboard).toBeUndefined();
-    session = openQuestion("social", reveal(session));
-    session = submit(session, studentB, "social", { choice: 3, reason: 0 }, startedAt + 10000);
+    session = openQuestion("impact", reveal(session));
+    session = submit(session, studentB, "impact", { choice: 3, reason: 0 }, startedAt + 10000);
     session = reveal(session);
     const board = snapshot(session, "presenter", "host").leaderboard!;
     expect(board.top.map(row => [row.nickname, row.points, row.previousPoints, row.rank])).toEqual([
@@ -45,7 +45,7 @@ describe("projector leaderboard", () => {
   it("shares tied ranks, selects six distinct players, and handles empty rooms and deletion", () => {
     const fixture = sessionFixture();
     for (let i = 0; i < 5; i++) fixture.members[`extra-${i}`] = { nickname: `Extra ${i}`, joinedAt: startedAt + i + 1 };
-    const session = reveal(openQuestion("opening", fixture));
+    const session = reveal(openQuestion("partners", fixture));
     let board = snapshot(session, "presenter", "host").leaderboard!;
     expect(board.top).toHaveLength(3);
     expect(board.bottom).toHaveLength(3);

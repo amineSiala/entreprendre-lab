@@ -32,10 +32,11 @@ export function grade(questionId: string, answer: Answer, elapsedMs = 0): Feedba
   const speedPoints = elapsedMs >= q.seconds * 1000 ? 0 : Math.round(1000 * (1 - 0.5 * Math.max(0, elapsedMs) / (q.seconds * 1000)));
   if (q.kind === "recall") {
     const recalled = recallForms(answer.recall ?? [], q.forms);
-    return { recalled, xp: Math.round(speedPoints * Math.min(1, recalled.length / (q.recallCount ?? q.forms.length))), explanation: key.explanation, takeaway: key.takeaway };
+    const recallPoints = 8000 - 4000 * Math.min(1, Math.max(0, elapsedMs) / (q.seconds * 1000));
+    return { recalled, xp: Math.round(recallPoints * Math.min(1, recalled.length / (q.recallCount ?? q.forms.length))), explanation: key.explanation, takeaway: key.takeaway };
   }
   if (q.kind === "vote") return { recalled: [], xp: 0, explanation: key.explanation, takeaway: key.takeaway, correctChoice: key.choice };
-  const choiceCorrect = key.choice === answer.choice, reasonCorrect = key.reason === answer.reason;
+  const choiceCorrect = key.choice === answer.choice, reasonCorrect = !q.reasons || key.reason === answer.reason;
   const correct = choiceCorrect && reasonCorrect;
   return { correct, choiceCorrect, reasonCorrect, recalled: [], xp: correct ? speedPoints : 0, explanation: key.explanation, takeaway: key.takeaway, correctChoice: key.choice, correctReason: key.reason };
 }

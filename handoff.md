@@ -1,5 +1,21 @@
 # Entreprendre.Lab — Full conversation handoff
 
+## Current update — company stories, final submission and four-hour rooms (11 October 2026)
+
+This section supersedes all historical curriculum, presenter-allocation, recall-timing, scoring and retention details below.
+
+- The French lesson now has 46 beats: QR lobby; eight company stories, each with teaser → anonymous story → reveal; three breaks of three single-tap questions; final recall; closing video. No P1/P2/P3 assignments or total duration target. The user's shortened **Rejoindre** homepage button and removal of the QR hint are preserved.
+- New forms: individual, partner, innovative, social, highgrowth, intrapreneur, family, international. Companies: eBay, Airbnb, Dyson, Empowerment Plan, Shopify, Post-it/3M, LEGO, AirAsia. Sources: `docs/story-sources.md`.
+- Nine quizzes last 20 seconds and need no justification. Correct answers earn 500–1,000 speed-based points. Final recall lasts **120 seconds**; drafts autosave, but **Valider mes réponses** locks the current text and fixes the server acceptance time. Without explicit submission, the last saved draft is finalized at automatic or manual closure. Score: `round((8000 - 4000 * clamp(elapsed / 120, 0, 1)) * uniqueCorrectForms / 8)`. All eight correct at timeout earn 4,000. Feedback remains private until collective reveal.
+- Room payloads carry `lessonVersion: stories-2026-v1`; rooms expire **four hours from creation**, never from last activity. Every storage access cleans retired records; a private Netlify scheduled function `cleanup-rooms` runs every five minutes. Cleanup commits independently before a failed room request. Legacy rooms are deleted rather than mapped into the new deck. Expired/missing valid codes return 410 `ROOM_EXPIRED`; clients stop polling and clear stored participant references. Physical deletion in hosted storage happens on the next successful sweep/access; local deletion happens on access. Host backups follow their own retention.
+- New interfaces: snapshot `expiresAt`, recall response `finalized`, answer request optional `finalize`. Identical final retries are idempotent; changed drafts cannot overwrite finalized answers. Draft saves never set the final scoring time. Existing JSON payload storage is reused; an additive migration indexes `game_rooms.created_at`.
+- Originals are in `photo/`, optimized copies in `public/media/`, with public credits at `/media/credits.html`. The user chose a licensed sewing illustration for Veronika Scott because no clearly reusable portrait was found; the caption explicitly says it is neither her nor her workshop. Seven other reveals have real portraits and company logos. The provided `video/videoplayback.mp4` is served as `/media/conclusion.mp4`; manual playback with sound, native keyboard controls, paused on slide exit.
+- Tests: 60 unit/API/Postgres tests passed; lint, TypeScript and online production build passed. Eight browser scenarios passed across the full run and one focused selector-fix rerun (not a single uninterrupted green run). Coverage includes all 46 beats at 1920×1080, 1366×768 and 1024×768; 320/390/430 px phones; real 120-second timeout at 4,000 points; draft/submit retries and privacy; exact room TTL and durable cleanup; 60-player lobby; leaderboard; video playback and keyboard handling. Screenshots remain ignored under `artifacts/`.
+- Browser tests now isolate `.next-e2e` and `.data-e2e` on port 3100. ESLint ignores the generated test build. Existing local port-3000 server was temporarily stopped for verification and must be restarted before handoff completion.
+- Publication of this update is pending at this checkpoint. Use the same existing Netlify site and public repository. Do not claim the new lesson is live until the deploy reaches ready and public checks pass.
+
+Historical notes follow.
+
 Updated **10 October 2026**, user timezone **Africa/Lagos**.
 
 ## Latest update — automatic answers and longer timers (10 October 2026)

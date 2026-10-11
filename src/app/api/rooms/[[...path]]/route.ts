@@ -14,7 +14,7 @@ const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("sync"), controller: z.string().uuid() }),
   z.object({ action: z.literal("release"), controller: z.string().uuid() }),
   z.object({ action: z.literal("move"), controller: z.string().uuid(), version: z.number().int().nonnegative(), direction: z.union([z.literal(-1), z.literal(1)]), force: z.boolean().optional(), target: z.number().int().min(0).max(beats.length - 1).optional() }),
-  z.object({ action: z.literal("answer"), controller: z.string().uuid().optional(), questionId: z.string().min(1).max(32), answer: z.object({ choice: z.number().int().min(0).max(3).optional(), reason: z.number().int().min(0).max(2).optional(), recall: z.array(z.string().max(100)).max(8).optional() }) }),
+  z.object({ action: z.literal("answer"), finalize: z.boolean().optional(), controller: z.string().uuid().optional(), questionId: z.string().min(1).max(32), answer: z.object({ choice: z.number().int().min(0).max(3).optional(), reason: z.number().int().min(0).max(2).optional(), recall: z.array(z.string().max(100)).max(8).optional() }) }),
   z.object({ action: z.literal("forget") }),
 ]);
 const rateStore = globalThis as typeof globalThis & { roomRate?: Map<string, { time: number; count: number }> };
@@ -72,7 +72,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path?: 
       if (body?.action === "move") updated = move(room, body.version, body.direction, body.force, body.target);
       if (body?.action === "answer") {
         if (role === "host") throw new RoomError(403, "Les réponses se font sur les téléphones.");
-        updated = submit(room, actor, body.questionId, body.answer);
+        updated = submit(room, actor, body.questionId, body.answer, Date.now(), body.finalize);
       }
       if (body?.action === "forget") {
         if (role === "host") throw new RoomError(400, "La suppression ici concerne uniquement les réponses personnelles des participants.");

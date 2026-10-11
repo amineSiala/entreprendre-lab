@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { NextRequest } from "next/server";
@@ -60,7 +60,7 @@ async function control(browser: Browser, code: string, controller = randomUUID()
   return controller;
 }
 
-async function open(browser: Browser, code: string, controller: string, questionId = "launch", version = 0) {
+async function open(browser: Browser, code: string, controller: string, questionId = "individual", version = 0) {
   const target = beats.findIndex(beat => beat.questionId === questionId && beat.kind.endsWith("-open"));
   const result = await request(browser, code, { action: "move", direction: 1, version, controller, target });
   expect(result.response.status).toBe(200);
@@ -69,26 +69,62 @@ async function open(browser: Browser, code: string, controller: string, question
 }
 
 describe("room API ownership and durable classroom flow", () => {
-  it("persists editable recall autosaves privately and closes them after one minute", async () => {
+  it("expires exactly four hours after creation, deletes on a rejected read, and cannot be extended by activity", async () => {
+    const host: Browser = {}, student: Browser = {};
+    const code = await create(host);
+    const joined = await request(student, code, { action: "join", nickname: "Expiry" });
+    const deadline = joined.payload.expiresAt!;
+    expect(deadline).toBeGreaterThan(Date.now() + 14_390_000);
+    vi.spyOn(Date, "now").mockReturnValue(deadline - 1);
+    expect((await request(host, code)).response.status).toBe(200);
+    vi.spyOn(Date, "now").mockReturnValue(deadline);
+    expect((await request(student, code)).response.status).toBe(410);
+    for (const body of [{ action: "join", nickname: "Late" }, { action: "sync", controller: randomUUID() }, { action: "answer", questionId: "boss", answer: { recall: ["social"] }, finalize: true }]) expect((await request(student, code, body)).payload.code).toBe("ROOM_EXPIRED");
+    expect(JSON.parse(await readFile(path.join(dataDirectory, "rehearsal.json"), "utf8")).sessions[code]).toBeUndefined();
+  });
+  it("deletes legacy rooms before reading obsolete slide or question IDs", async () => {
+    const host: Browser = {}, code = await create(host);
+    const file = path.join(dataDirectory, "rehearsal.json");
+    const data = JSON.parse(await readFile(file, "utf8"));
+    delete data.sessions[code].lessonVersion;
+    data.sessions[code].index = 999;
+    data.sessions[code].rounds.old = { questionId: "obsolete", state: "open" };
+    await writeFile(file, JSON.stringify(data));
+    expect((await request(host, code)).response.status).toBe(410);
+    expect(JSON.parse(await readFile(file, "utf8")).sessions[code]).toBeUndefined();
+  });
+  it("serializes draft/submit races and keeps finalized recall immutable", async () => {
+    const host: Browser = {}, student: Browser = {}, code = await create(host);
+    await request(student, code, { action: "join", nickname: "Finalist" });
+    const controller = await control(host, code);
+    await open(host, code, controller, "boss");
+    const final = { action: "answer", questionId: "boss", answer: { recall: ["social", "familial"] }, finalize: true };
+    await Promise.all([request(student, code, { ...final, answer: { recall: ["social"] }, finalize: false }), request(student, code, final), request(student, code, final)]);
+    const saved = (await request(student, code)).payload.round?.submission;
+    expect(saved).toMatchObject({ finalized: true, answer: { recall: ["social", "familial"] } });
+    expect(saved?.feedback).toBeUndefined();
+    expect((await request(student, code, { ...final, answer: { recall: ["social"] }, finalize: false })).response.status).toBe(409);
+  });
+  it("persists editable recall autosaves privately and closes them after two minutes", async () => {
     const host: Browser = {}, student: Browser = {}, peer: Browser = {};
     const code = await create(host);
     await request(student, code, { action: "join", nickname: "Writer" });
     await request(peer, code, { action: "join", nickname: "Peer" });
     const controller = await control(host, code);
-    const opened = await open(host, code, controller, "mini");
-    await request(student, code, { action: "answer", questionId: "mini", answer: { recall: ["ex"] } });
+    const opened = await open(host, code, controller, "boss");
+    await request(student, code, { action: "answer", questionId: "boss", answer: { recall: ["ex"] } });
     vi.spyOn(Date, "now").mockReturnValue(opened.round!.openedAt + 30000);
-    const saved = await request(student, code, { action: "answer", questionId: "mini", answer: { recall: ["ex nihilo", "essaimage", "franchise"] } });
+    const saved = await request(student, code, { action: "answer", questionId: "boss", answer: { recall: ["individuel", "association", "innovant"] } });
     expect(saved.response.status).toBe(200);
     expect(saved.payload.round?.submission?.feedback).toBeUndefined();
     expect((await request(peer, code)).payload.round?.submission).toBeUndefined();
     const restored = await request({ token: student.token }, code);
-    expect(restored.payload.round?.submission?.answer.recall).toEqual(["ex nihilo", "essaimage", "franchise"]);
-    vi.spyOn(Date, "now").mockReturnValue(opened.round!.openedAt + 60000);
+    expect(restored.payload.round?.submission?.answer.recall).toEqual(["individuel", "association", "innovant"]);
+    vi.spyOn(Date, "now").mockReturnValue(opened.round!.openedAt + 120000);
     const closed = await request(student, code);
     expect(closed.payload.round?.state).toBe("revealed");
-    expect(closed.payload.xp).toBe(750);
-    expect((await request(student, code, { action: "answer", questionId: "mini", answer: { recall: ["vert"] } })).response.status).toBe(409);
+    expect(closed.payload.xp).toBe(1500);
+    expect((await request(student, code, { action: "answer", questionId: "boss", answer: { recall: ["vert"] } })).response.status).toBe(409);
   });
   it("cannot create a room by bypassing the presenter dialog", async () => {
     expect((await request({}, "", { action: "create", mode: "phones" })).response.status).toBe(401);
@@ -105,8 +141,8 @@ describe("room API ownership and durable classroom flow", () => {
     vi.spyOn(Date, "now").mockReturnValue(opened.round!.openedAt + 20_000);
     const current = await request(student, code);
     expect(current.payload.round?.state).toBe("revealed");
-    expect(beats[current.payload.index!].id).toBe("launch-results");
-    expect((await request(student, code, { action: "answer", questionId: "launch", answer: { choice: 1, reason: 2 } })).payload.code).toBe("CLOSED");
+    expect(beats[current.payload.index!].id).toBe("individual-results");
+    expect((await request(student, code, { action: "answer", questionId: "individual", answer: { choice: 1, reason: 2 } })).payload.code).toBe("CLOSED");
   });
 
   it("persists two independent student answers, preserves refresh identity, and reveals private feedback", async () => {
@@ -120,7 +156,7 @@ describe("room API ownership and durable classroom flow", () => {
       expect(joined.response.cookies.get("elab_identity")).toMatchObject({ httpOnly: true, sameSite: "lax", path: "/" });
     }
     const opened = await open(host, code, controller);
-    const answer = { action: "answer", questionId: "launch", answer: { choice: 1, reason: 2 } };
+    const answer = { action: "answer", questionId: "individual", answer: { choice: 1, reason: 2 } };
     const first = await request(alice, code, answer);
     expect(first.payload.round?.submission?.feedback).toBeUndefined();
     expect(first.payload.round?.correctChoice).toBeUndefined();
@@ -135,7 +171,7 @@ describe("room API ownership and durable classroom flow", () => {
     expect(revealed.payload.round?.counts).toBeUndefined();
     const aliceRefresh = await request({ token: alice.token }, code);
     const bilalRefresh = await request({ token: bilal.token }, code);
-    expect(aliceRefresh.payload).toMatchObject({ recognized: ["exnihilo", "essaimage"] });
+    expect(aliceRefresh.payload).toMatchObject({ recognized: ["individual"] });
     expect(aliceRefresh.payload.xp).toBeGreaterThanOrEqual(500);
     expect(aliceRefresh.payload.xp).toBeLessThanOrEqual(1000);
     expect(aliceRefresh.payload.round?.submission?.feedback?.correct).toBe(true);
@@ -151,7 +187,7 @@ describe("room API ownership and durable classroom flow", () => {
     expect(serialized).not.toContain(host.token!);
     const durable = JSON.parse(serialized);
     expect(durable.sessions[code].index).toBe(revealed.payload.index);
-    expect(Object.keys(durable.sessions[code].rounds.launch.responses)).toHaveLength(2);
+    expect(Object.keys(durable.sessions[code].rounds.individual.responses)).toHaveLength(2);
   });
 
   it("requires membership and never trusts a student's claimed host role or controller", async () => {
@@ -159,7 +195,7 @@ describe("room API ownership and durable classroom flow", () => {
     const code = await create(host);
     const controller = await control(host, code);
     expect((await request(outsider, code)).response.status).toBe(403);
-    expect((await request(outsider, code, { action: "answer", questionId: "launch", answer: { choice: 1, reason: 2 } })).response.status).toBe(403);
+    expect((await request(outsider, code, { action: "answer", questionId: "individual", answer: { choice: 1, reason: 2 } })).response.status).toBe(403);
     await request(student, code, { action: "join", nickname: "Équipe A" });
     expect((await request(student, code, { action: "sync", controller })).response.status).toBe(403);
     expect((await request(student, code, { action: "move", controller, direction: 1, version: 0, role: "host", hostHash: identityHash(host.token!) })).response.status).toBe(403);
@@ -194,7 +230,7 @@ describe("room API ownership and durable classroom flow", () => {
     const state = await request(host, code);
     expect(state.response.status).toBe(200);
     expect(state.payload).toMatchObject({ role: "host", canControl: false });
-    const answer = await request(host, code, { action: "answer", questionId: "opening", answer: { choice: 0 } });
+    const answer = await request(host, code, { action: "answer", questionId: "partners", answer: { choice: 0 } });
     expect(answer.response.status).toBe(409);
     expect(answer.payload.code).toBe("CONTROLLER");
   });
@@ -218,7 +254,7 @@ describe("room API ownership and durable classroom flow", () => {
     const students: Browser[] = [{}, {}, {}];
     await Promise.all(students.map((student, index) => request(student, code, { action: "join", nickname: `Équipe ${index + 1}` })));
     await open(host, code, controller);
-    const body = { action: "answer", questionId: "launch", answer: { choice: 1, reason: 2 } };
+    const body = { action: "answer", questionId: "individual", answer: { choice: 1, reason: 2 } };
     const submitted = await Promise.all([...students, students[0]].map(student => request(student, code, body)));
     expect(submitted.every(result => result.response.status === 200)).toBe(true);
     expect((await request(host, code)).payload.round?.count).toBe(3);
@@ -233,7 +269,7 @@ describe("room API ownership and durable classroom flow", () => {
     const code = await create(host);
     const controller = await control(host, code);
     await open(host, code, controller);
-    expect((await request(host, code, { action: "answer", questionId: "launch", answer: { choice: 1, reason: 2 }, controller })).response.status).toBe(403);
+    expect((await request(host, code, { action: "answer", questionId: "individual", answer: { choice: 1, reason: 2 }, controller })).response.status).toBe(403);
   });
 
   it("forgets only the requesting student's answers and membership", async () => {
@@ -243,7 +279,7 @@ describe("room API ownership and durable classroom flow", () => {
     await request(alice, code, { action: "join", nickname: "Alice" });
     await request(bilal, code, { action: "join", nickname: "Bilal" });
     await open(host, code, controller);
-    const answer = { action: "answer", questionId: "launch", answer: { choice: 1, reason: 2 } };
+    const answer = { action: "answer", questionId: "individual", answer: { choice: 1, reason: 2 } };
     await request(alice, code, answer);
     await request(bilal, code, answer);
     expect((await request(host, code, { action: "forget" })).response.status).toBe(400);
@@ -280,7 +316,7 @@ describe("API input and cookie boundaries", () => {
     expect((await request({}, "", undefined, { raw: "x".repeat(6_001) })).response.status).toBe(413);
     expect((await request({}, "ABC234/extra")).response.status).toBe(404);
     expect((await request({}, "invalid")).response.status).toBe(404);
-    expect((await request({}, "ABC234")).response.status).toBe(404);
+    expect((await request({}, "ABC234")).response.status).toBe(410);
   });
 
   it("returns a safe 404 for unknown or inherited-object question names", async () => {

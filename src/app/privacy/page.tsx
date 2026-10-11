@@ -26,7 +26,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2>Conservation et suppression</h2>
-          <p>Les données restent dans le stockage de la séance tant qu’elles ne sont pas supprimées. La fin de la présentation et l’expiration du cookie ne les effacent pas automatiquement.</p>
+          <p>Une salle expire quatre heures après sa création, même si elle est encore active. L’accès s’arrête alors. En ligne, les données de la salle sont supprimées au prochain nettoyage réussi, programmé toutes les cinq minutes. En répétition locale, les salles expirées sont effacées au prochain accès au serveur. La référence locale de participation est effacée quand votre navigateur constate l’expiration. Les éventuelles sauvegardes de l’hébergeur suivent sa propre politique de conservation.</p>
           <p>Depuis <Link href="/me">votre bilan personnel</Link>, vous pouvez supprimer votre participation et vos réponses dans la salle concernée, avec le navigateur utilisé pour jouer. {online ? "L’administrateur du site et son hébergeur Netlify gèrent le stockage et peuvent accéder aux données. Contactez l’organisateur pour une demande de suppression supplémentaire." : "L’organisateur peut effacer toutes les salles en supprimant le fichier de données sur son ordinateur, serveur arrêté."}</p>
         </section>
 

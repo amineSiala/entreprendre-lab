@@ -9,7 +9,7 @@ export const studentC = "student-c";
 
 export function sessionFixture(mode: PlayMode = "phones"): Session {
   return {
-    id: "session-test", code: "ABC234", hostHash: "presenter", mode,
+    lessonVersion: "stories-2026-v1", id: "session-test", code: "ABC234", hostHash: "presenter", mode,
     index: 0, version: 0, createdAt: startedAt,
     members: {
       [studentA]: { nickname: "Alice", joinedAt: startedAt },

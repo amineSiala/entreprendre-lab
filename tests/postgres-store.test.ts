@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import { NetlifyDB } from "@netlify/database-dev";
+import { getDatabase } from "@netlify/database";
+import { cleanupSql, cleanupParams } from "@/lib/room-cleanup";
 import { closeStore, createSession, getSession, transaction } from "@/lib/store";
 
 let database: NetlifyDB;
@@ -26,4 +28,23 @@ test("persists isolated rooms and rolls back a failed mutation", async () => {
 test("enforces a durable per-host creation limit", async () => {
   for (let i = 0; i < 15; i++) await transaction(data => createSession(data, "limited-host", "phones"));
   await expect(transaction(data => createSession(data, "limited-host", "phones"))).rejects.toMatchObject({ status: 429 });
+});
+
+test("scheduled cleanup removes expired and legacy data without visitors and cannot resurrect a deleted room", async () => {
+  const db = getDatabase({ connectionString: process.env.NETLIFY_DB_URL! });
+  try {
+    const expired = await transaction(data => createSession(data, "expired-host", "phones"));
+    const legacy = await transaction(data => createSession(data, "legacy-host", "phones"));
+    const live = await transaction(data => createSession(data, "live-host", "phones"));
+    await db.pool.query("UPDATE game_rooms SET created_at = NOW() - INTERVAL '4 hours' WHERE code = $1", [expired.code]);
+    await db.pool.query("UPDATE game_rooms SET payload = payload - 'lessonVersion' WHERE code = $1", [legacy.code]);
+    await db.pool.query(cleanupSql, cleanupParams());
+    const codes = (await db.pool.query("SELECT code FROM game_rooms WHERE code = ANY($1)", [[expired.code, legacy.code, live.code]])).rows.map((row: { code: string }) => row.code);
+    expect(codes).toEqual([live.code]);
+    await expect(transaction(data => getSession(data, expired.code), true, expired.code)).rejects.toMatchObject({ code: "ROOM_EXPIRED" });
+    expect((await db.pool.query("SELECT code FROM game_rooms WHERE code = $1", [expired.code])).rows).toEqual([]);
+    await db.pool.query("UPDATE game_rooms SET created_at = NOW() - INTERVAL '4 hours' WHERE code = $1", [live.code]);
+    await expect(transaction(data => getSession(data, live.code), false, live.code)).rejects.toMatchObject({ code: "ROOM_EXPIRED" });
+    expect((await db.pool.query("SELECT code FROM game_rooms WHERE code = $1", [live.code])).rows).toEqual([]);
+  } finally { await db.pool.end(); }
 });

@@ -5,6 +5,8 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { PlayMode, Session } from "@/types/domain";
 import { RoomError } from "@/lib/engine";
 import { getDatabase } from "@netlify/database";
+import { isRetired, LESSON_VERSION } from "./room-policy";
+import { cleanupSql, cleanupParams } from "./room-cleanup";
 
 // Local rehearsal uses a file; hosted rooms use Postgres row locks across workers.
 type Database = { sessions: Record<string, Session> };
@@ -25,13 +27,18 @@ export async function transaction<T>(work: (data: Database) => T, write = true, 
     let data: Database;
     try { data = JSON.parse(await fs.readFile(file, "utf8")); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; data = { sessions: {} }; }
-    const result = work(data);
-    if (write) {
+    const persist = async () => {
       const temporary = file + ".tmp";
       const handle = await fs.open(temporary, "w", 0o600);
       try { await handle.writeFile(JSON.stringify(data), "utf8"); await handle.sync(); } finally { await handle.close(); }
       await fs.rename(temporary, file);
-    }
+    };
+    let removed = false;
+    for (const [key, room] of Object.entries(data.sessions)) if (isRetired(room)) { delete data.sessions[key]; removed = true; }
+    // Persist cleanup before callbacks, including callbacks that reject an expired room.
+    if (removed) await persist();
+    const result = work(data);
+    if (write) await persist();
     return result;
   });
   globalStore.rehearsalQueue = run.catch(() => {});
@@ -41,6 +48,8 @@ async function postgresTransaction<T>(work: (data: Database) => T, write: boolea
   const db = postgres ??= getDatabase(process.env.NETLIFY_DB_URL ? { connectionString: process.env.NETLIFY_DB_URL } : undefined);
   const client = await db.pool.connect();
   try {
+    // Autocommitted separately so a rejected request cannot roll deletion back.
+    await client.query(cleanupSql, cleanupParams());
     await client.query("BEGIN");
     const data: Database = { sessions: {} };
     if (code) {
@@ -55,7 +64,7 @@ async function postgresTransaction<T>(work: (data: Database) => T, write: boolea
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [room.hostHash]);
         const recent = await client.query("SELECT COUNT(*)::int AS count FROM game_rooms WHERE host_hash = $1 AND created_at > NOW() - INTERVAL '10 minutes'", [room.hostHash]);
         if (recent.rows[0].count >= 15) throw new RoomError(429, "Trop de créations de salles. Réessayez dans dix minutes.");
-        await client.query("INSERT INTO game_rooms(code, host_hash, payload) VALUES ($1, $2, $3::jsonb)", [room.code, room.hostHash, JSON.stringify(room)]);
+        await client.query("INSERT INTO game_rooms(code, host_hash, payload, created_at) VALUES ($1, $2, $3::jsonb, $4)", [room.code, room.hostHash, JSON.stringify(room), new Date(room.createdAt).toISOString()]);
       }
     }
     await client.query("COMMIT");
@@ -70,12 +79,12 @@ export function createSession(data: Database, hostHash: string, mode: PlayMode) 
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code: string;
   do { code = Array.from(randomBytes(6), byte => alphabet[byte % alphabet.length]).join(""); } while (data.sessions[code]);
-  const session: Session = { id: randomUUID(), code, hostHash, mode, index: 0, version: 0, createdAt: Date.now(), members: {}, rounds: {} };
+  const session: Session = { lessonVersion: LESSON_VERSION, id: randomUUID(), code, hostHash, mode, index: 0, version: 0, createdAt: Date.now(), members: {}, rounds: {} };
   data.sessions[code] = session;
   return session;
 }
 export function getSession(data: Database, code: string) {
   const session = data.sessions[code];
-  if (!session) throw new RoomError(404, "Ce code ne correspond à aucune salle sur ce serveur.");
+  if (!session || isRetired(session)) throw new RoomError(410, "Cette salle a expiré ou n’existe plus. Les salles durent quatre heures. Rejoignez une nouvelle salle.", "ROOM_EXPIRED");
   return session;
 }

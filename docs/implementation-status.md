@@ -65,3 +65,8 @@ Supabase est une possibilité prévue dans la spécification initiale, pas une d
 ## Vérification
 
 Lint, TypeScript, 47 tests unitaires/API, 5 scénarios Playwright et compilation de production réussis. Navigation autoritaire, justification obligatoire, confidentialité avant révélation, rafraîchissement, onglet contrôleur unique, fermeture précoce, mode hors ligne, rappel des huit formes et suppression personnelle ont été vérifiés. Le rapport distingue les navigateurs et participants API simulés des téléphones physiques non testés.
+# Current status — 11 October 2026
+
+Company-story lesson implemented: 46 beats, eight new forms, nine 20-second single-tap quizzes, a 120-second recall with explicit final submission and up to 8,000 points, closing video, and four-hour room expiry. Legacy rooms are removed; Netlify cleanup is scheduled every five minutes. No presenter allocation or overall duration target remains.
+
+Validation: 60 unit/API/Postgres tests, lint, TypeScript and online production build pass. Eight browser scenarios pass across a full run and a focused test-selector rerun. See handoff.md for current semantics and publication status; the historical sections below are superseded where they conflict.

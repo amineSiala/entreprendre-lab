@@ -4,18 +4,30 @@ import { questions } from "@/content/questions.fr";
 import { keys } from "@/lib/answer-keys";
 import { grade } from "@/lib/grading";
 import { presenterNotes } from "@/lib/presenter-notes";
-import type { Answer, FormId, RoomState, Session } from "@/types/domain";
+import type { Answer, FormId, RoomState, Round, Session } from "@/types/domain";
+import { expiresAt } from "./room-policy";
 
 export class RoomError extends Error {
   constructor(public status: number, message: string, public code = "ROOM_ERROR") { super(message); }
+}
+function closeRound(round: Round, now: number) {
+  const q = questions[round.questionId];
+  const at = Math.min(now, round.openedAt + q.seconds * 1000);
+  if (q.kind === "recall") for (const response of Object.values(round.responses)) {
+    if (response.finalized) continue;
+    response.finalized = true;
+    response.at = at;
+    response.feedback = grade(round.questionId, response.answer, at - round.openedAt);
+  }
+  round.state = "revealed";
+  round.closedAt = at;
 }
 export function expireRounds(session: Session, now = Date.now()): Session {
   const expired = Object.values(session.rounds).filter(round => round.state === "open" && now >= round.openedAt + questions[round.questionId].seconds * 1000);
   if (!expired.length) return session;
   const next = structuredClone(session);
   for (const round of expired) {
-    next.rounds[round.questionId].state = "revealed";
-    next.rounds[round.questionId].closedAt = round.openedAt + questions[round.questionId].seconds * 1000;
+    closeRound(next.rounds[round.questionId], now);
     if (beats[next.index].questionId === round.questionId && beats[next.index].kind.endsWith("-open")) next.index++;
   }
   next.version++;
@@ -46,14 +58,14 @@ export function move(session: Session, expectedVersion: number, direction: -1 | 
   if (beat.questionId && direction > 0) {
     if (beat.kind.endsWith("-open") && !result.rounds[beat.questionId]) {
       result.rounds[beat.questionId] = { questionId: beat.questionId, state: "open", openedAt: now, responses: {} };
-    } else if (beat.kind.endsWith("-results") || beat.kind === "question-explain") {
+    } else if (beat.kind.endsWith("-results")) {
       const round = result.rounds[beat.questionId];
-      if (round?.state === "open") { round.state = "revealed"; round.closedAt = now; }
+      if (round?.state === "open") closeRound(round, now);
     }
   }
   return result;
 }
-export function submit(session: Session, actor: string, questionId: string, answer: Answer, now = Date.now()) {
+export function submit(session: Session, actor: string, questionId: string, answer: Answer, now = Date.now(), finalize = false) {
   const round = Object.hasOwn(session.rounds, questionId) ? session.rounds[questionId] : undefined;
   const q = Object.hasOwn(questions, questionId) ? questions[questionId] : undefined;
   if (!round || !q) throw new RoomError(404, "Question introuvable.");
@@ -62,25 +74,25 @@ export function submit(session: Session, actor: string, questionId: string, answ
   if (previous) {
     const sameAnswer = previous.answer.choice === answer.choice && previous.answer.reason === answer.reason
       && JSON.stringify(previous.answer.recall) === JSON.stringify(answer.recall);
-    if (sameAnswer) return session;
-    if (q.kind !== "recall" || round.state !== "open") throw new RoomError(409, "Votre réponse est déjà enregistrée et ne peut plus être modifiée.", "ALREADY_ANSWERED");
+    if (sameAnswer && (q.kind !== "recall" || previous.finalized || !finalize)) return session;
+    if (q.kind !== "recall" || previous.finalized || round.state !== "open") throw new RoomError(409, "Votre réponse est déjà enregistrée et ne peut plus être modifiée.", "ALREADY_ANSWERED");
   }
   if (round.state !== "open" || beats[session.index].questionId !== questionId || !beats[session.index].kind.endsWith("-open")) throw new RoomError(409, "Cette question est fermée.", "CLOSED");
   if (now >= round.openedAt + q.seconds * 1000) throw new RoomError(409, "Le temps de réponse est écoulé.", "CLOSED");
   if (q.kind === "recall") {
-    if (!answer.recall || answer.recall.length > (q.recallCount ?? 8) || (!previous && !answer.recall.some(s => s.trim()))) throw new RoomError(422, "Indiquez au moins une forme.");
+    if (!answer.recall || answer.recall.length > (q.recallCount ?? 8)) throw new RoomError(422, "Vérifiez les formes saisies.");
   } else {
     if (answer.choice === undefined || answer.choice < 0 || answer.choice >= q.options.length) throw new RoomError(422, "Choisissez une réponse.");
     if (q.reasons && (answer.reason === undefined || answer.reason < 0 || answer.reason >= q.reasons.length)) throw new RoomError(422, "Choisissez aussi une justification.");
   }
   const next = structuredClone(session);
-  next.rounds[questionId].responses[actor] = { answer, at: now, feedback: grade(questionId, answer, now - round.openedAt) };
+  next.rounds[questionId].responses[actor] = { answer, at: now, finalized: q.kind !== "recall" || finalize, feedback: grade(questionId, answer, now - round.openedAt) };
   return next;
 }
 export function snapshot(session: Session, actor: string, role: "host" | "student", controller?: string): RoomState {
   const beat = beats[session.index], question = beat.questionId ? questions[beat.questionId] : undefined;
   const round = beat.questionId ? session.rounds[beat.questionId] : undefined;
-  const state: RoomState = { id: session.id, code: session.code, mode: "phones", index: session.index, version: session.version, participants: Object.keys(session.members).length, role, ended: beat.kind === "conclusion" };
+  const state: RoomState = { expiresAt: expiresAt(session), id: session.id, code: session.code, mode: "phones", index: session.index, version: session.version, participants: Object.keys(session.members).length, role, ended: beat.kind === "conclusion" };
   if (role === "host") {
     if (beat.kind === "title") state.lobbyParticipants = Object.values(session.members).sort((a, b) => a.joinedAt - b.joinedAt).map(member => member.nickname);
     state.canControl = Boolean(session.controller && session.controller.id === controller && session.controller.until > Date.now());
@@ -107,7 +119,7 @@ export function snapshot(session: Session, actor: string, role: "host" | "studen
     const responses = Object.values(round.responses);
     state.round = { questionId: round.questionId, state: round.state, openedAt: round.openedAt, count: responses.length };
     const own = round.responses[actor];
-    if (own) state.round.submission = { answer: own.answer, at: own.at, ...(round.state === "revealed" ? { feedback: own.feedback } : {}) };
+    if (own) state.round.submission = { answer: own.answer, at: own.at, finalized: own.finalized, ...(round.state === "revealed" ? { feedback: own.feedback } : {}) };
     if (round.state === "revealed") {
       const key = keys[round.questionId];
       Object.assign(state.round, { explanation: key.explanation, takeaway: key.takeaway, correctChoice: key.choice, correctReason: key.reason });

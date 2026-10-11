@@ -1,41 +1,12 @@
 import "server-only";
-
-// Only the current note is sent to an authenticated presenter snapshot.
-export const presenterNotes: Record<string, string> = {
-  "welcome": "Invitez la classe à devenir le jury. Répondre juste et vite rapporte jusqu’à 1 000 points. Objectif final : rappeler les huit formes et les appliquer à un cas inédit.",
-  "opening-open": "Laissez chacun prendre position. Ce vote de départ n’est pas noté.",
-  "opening-results": "Le projet peut se développer dans une organisation : annoncez l’intrapreneuriat.",
-  "mission": "Scénario fictif : repas sains, accessibles et pratiques. Huit personnages explorent le même problème.",
-  "definition": "Entreprendre : repérer un besoin, mobiliser des ressources et agir pour créer de la valeur dans l’incertitude.",
-  "lina": "La cafétéria est une nouvelle entreprise, même si vendre des repas n’est pas une idée nouvelle.",
-  "nour": "Une nouvelle entreprise se développe avec le soutien d’une entreprise existante : conseils, moyens ou financement.",
-  "launch-open": "Analyse ET justification. L’indice distinctif est le soutien de l’entreprise d’origine à la nouvelle activité.",
-  "launch-results": "Les deux projets sont des créations. L’essaimage précise le contexte d’accompagnement du second.",
-  "sami": "Transition P1 → P2. Le projet de Sami reste dans l’entreprise qui l’emploie. Comparez à la nouvelle structure de Nour.",
-  "compare": "Le critère décisif : le projet reste-t-il interne ou une entreprise distincte est-elle créée ?",
-  "intra-open": "La même idée passe de l’intrapreneuriat à l’essaimage. Le changement de structure change l’analyse.",
-  "intra-results": "Le soutien de l’employeur ne signifie pas que le projet reste en interne.",
-  "ines": "Examinez ce qui existe : équipements, clients et engagements. Le nouveau propriétaire reprend une activité.",
-  "omar": "Un contrat donne accès à une marque et un concept. Le franchisé reste indépendant.",
-  "network-open": "Deux faits distincts : rachat ET contrat de réseau. Évitez les étiquettes exclusives.",
-  "network-results": "Changer de propriétaire n’efface pas l’entreprise préexistante.",
-  "mini-open": "Trois noms sur papier en équipes ou sur téléphone. Aucun indice projeté.",
-  "mini-results": "Rappelez ex nihilo, essaimage, intrapreneuriat, reprise et franchise. Transition vers les finalités.",
-  "yasmine": "La finalité sociale est prioritaire. Un modèle viable permet de poursuivre la mission.",
-  "social-open": "Le mot bénéfice est un piège. Raisonnez sur la mission et l’usage des ressources.",
-  "social-results": "Un modèle économique peut rendre l’impact durable.",
-  "adam": "L’activité repose sur une innovation technologique. Un site ou une messagerie ne suffit pas.",
-  "jade": "L’objectif environnemental est central. Une activité verte peut être technologique, sans obligation.",
-  "green-open": "Distinguez l’usage d’un outil ordinaire de l’innovation technologique fondatrice.",
-  "green-results": "L’objectif environnemental est prouvé ; le caractère techno ne l’est pas.",
-  "taxonomy": "La liste du cours mélange modes de création, cadres, fondements et finalités. Ce ne sont pas huit formes juridiques.",
-  "axes-open": "Une finalité verte ne détermine ni le lancement ni la forme juridique.",
-  "axes-results": "On peut reprendre une entreprise et la réorienter vers l’environnement.",
-  "jury-open": "Demandez une raison et une limite. L’option interne exploite les moyens disponibles mais exige une validation.",
-  "jury-results": "Faites défendre deux options différentes avec les contraintes du scénario.",
-  "boss-open": "1 minute, puis clôture automatique. Aucun menu de formes ni nom de personnage pendant la réponse.",
-  "boss-results": "Le rappel est distinct des points. À moins de trois réponses individuelles, les détails restent privés.",
-  "transfer-open": "Ce cas quitte la restauration. Trois indices vérifient le transfert des concepts.",
-  "transfer-results": "Société distincte soutenue = essaimage ; innovation centrale = techno ; finalité environnementale = vert.",
-  "conclusion": "P1 : huit formes pour lire les projets. P2 : elles peuvent se combiner. P3 : le choix dépend des objectifs, des ressources et du contexte. Deux minutes de questions.",
-};
+import { beats } from "@/content/beats.fr";
+import { characters } from "@/content/curriculum.fr";
+import { keys } from "./answer-keys";
+export const presenterNotes: Record<string, string> = Object.fromEntries(beats.map(beat => {
+const person = characters.find(item => item.id === beat.character);
+let note = "Invitez la classe à scanner le QR code. La salle dure quatre heures. Commencez quand tout le monde est prêt.";
+if (person) note = beat.kind === "teaser" ? "Lisez la question et laissez la classe proposer des noms à voix haute. N’annoncez pas encore l’entreprise ni la forme." : beat.kind === "story" ? `${person.story} Laissez un dernier moment pour deviner avant la révélation.` : `${person.name} — ${person.company}. ${person.definition} Une même entreprise peut illustrer plusieurs formes : nous en soulignons une ici. Source : ${person.source}`;
+if (beat.questionId) note = beat.kind.endsWith("-results") ? keys[beat.questionId].explanation : beat.questionId === "boss" ? "Deux minutes. Les brouillons se sauvegardent. Valider verrouille la réponse et fixe le bonus de vitesse ; sinon le dernier brouillon compte à la fermeture. Jusqu’à 8 000 points, au prorata des formes justes. Aucun indice pendant le rappel." : "Vingt secondes, un seul choix, sans justification obligatoire. La réponse est enregistrée au toucher. Après la correction, la flèche droite affiche le classement.";
+if (beat.kind === "conclusion") note = "Huit formes, huit histoires : toutes commencent quand quelqu’un voit une opportunité et agit. Les formes peuvent se combiner. Lancez la vidéo avec son bouton Lecture, puis ouvrez la discussion.";
+return [beat.id, note];
+}));

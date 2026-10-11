@@ -1,78 +1,38 @@
 # Entreprendre.Lab
 
-Présentation interactive en français : un campus à nourrir, huit formes d’entrepreneuriat et des défis qui demandent de justifier ses choix. Le parcours vise 27 minutes avec trois présentateurs. Deux formats sont proposés : discussion en équipes sur le projecteur, ou réponses individuelles sur téléphone.
+Présentation interactive en français : huit histoires vraies, huit formes d’entrepreneuriat, neuf questions et un grand rappel final.
 
-La liste officielle fournie par l’enseignant est utilisée : création ex nihilo, essaimage, franchise, intrapreneuriat, reprise, entrepreneuriat social et solidaire, techno-entrepreneuriat et entrepreneuriat vert.
+**Site : https://entreprendre-lab.netlify.app**
+**Dépôt : https://github.com/amineSiala/entreprendre-lab**
 
-## Jouer à distance (Netlify)
+## Le parcours
 
-**Site public : https://entreprendre-lab.netlify.app**
+46 étapes : salle QR, huit histoires en trois temps (question mystère → histoire anonyme → révélation), trois pauses de trois questions, rappel final et vidéo de conclusion. Aucune répartition des intervenants ni durée totale imposée.
 
-Dépôt public : https://github.com/amineSiala/entreprendre-lab. Déploiement effectué via le serveur MCP officiel de Netlify le 10 octobre 2026. Le site utilise Postgres et le runtime Next.js de Netlify. Les publications actuelles sont des exports du code committé envoyés via MCP ; les pushes GitHub ne déclenchent pas encore de déploiement automatique.
+Formes : individuel, en association, innovant, social, forte croissance, intrapreneuriat, familial, international. Les formes peuvent se combiner. Les entreprises servent d’exemples pédagogiques ; ces catégories ne sont pas des statuts juridiques.
 
-Ouvrir le site, cliquer sur le petit lien **Espace présentateur** en bas de page, saisir le mot de passe privé, choisir **Sur téléphone**, puis créer une salle et envoyer le lien de participation aux amis. Ils peuvent utiliser leurs données mobiles ou un autre Wi-Fi. Le présentateur avance les questions depuis son navigateur ; les participants répondent et justifient sur le leur. Pour commenter les diapositives ensemble à distance, partager l’écran dans votre appel habituel.
+## Jouer
 
-Le fichier `netlify.toml` active le mode en ligne. `@netlify/database` et les migrations de `netlify/database/migrations/` configurent Postgres. Chaque modification verrouille la ligne de la salle dans une transaction : les instances serveur partagent les réponses et le contrôle. La version hébergée ne bascule jamais vers un fichier local si la base est indisponible. Le mode en ligne génère les QR codes à partir de l’URL du site, indépendamment de l’adresse LAN utilisée en développement.
+Ouvrir **Espace présentateur**, s’authentifier, créer une salle et projeter le QR code. Les participants choisissent un pseudo sur leur téléphone. Le présentateur clique **Commencer** quand la classe est prête. Wi-Fi ou données mobiles fonctionnent sur le site public.
 
-Netlify Database nécessite un compte compatible avec les crédits Netlify. Les accès à la base restent côté serveur. Ne pas committer les identifiants ni `.env.local`. Les salles locales ne sont pas transférées automatiquement au site.
+Flèches gauche/droite pour naviguer. Chaque correction est suivie d’une étape de classement cumulatif sur le projecteur. Les notes sont visibles à la classe lorsqu’on ouvre leur fenêtre.
 
-## Démarrer localement
+- Quiz : 20 secondes, un choix au toucher, sans justification obligatoire. Bonne réponse : 500–1 000 points selon la vitesse ; sinon zéro.
+- Rappel final : 120 secondes, huit champs. Les brouillons se sauvegardent et restent modifiables. **Valider mes réponses** verrouille le texte et fixe l’heure de score. À défaut, le dernier brouillon sauvegardé compte à la fermeture.
+- Score final : `round((8000 - 4000 × elapsedSeconds / 120) × correctForms / 8)`, avec un temps limité à 0–120 secondes et des formes distinctes. Les corrections restent cachées jusqu’à la révélation collective.
+- La vidéo finale démarre manuellement, avec son et commandes natives.
 
-Prérequis : Node.js 20.9 ou plus récent et npm. Vérification effectuée avec Node.js 24.20.0.
+## Conservation
+
+Les salles expirent exactement quatre heures après création ; l’activité ne prolonge pas ce délai. En ligne, nettoyage toutes les cinq minutes et à l’accès : les salles expirées ou de l’ancien cours sont supprimées. Localement, suppression au prochain accès au stockage. Un navigateur connecté efface sa référence de participation quand il constate l’expiration. Le cookie aléatoire reste valable 30 jours ; ce n’est pas un compte. La suppression individuelle reste disponible dans /me pendant la durée de la salle.
+
+## Développement
+
+Node.js 20.9+ et npm. Configurer le mot de passe privé par son empreinte SHA-256 dans `PRESENTER_PASSWORD_HASH` côté serveur, jamais dans le code public.
 
 ```powershell
-npm install
+npm ci
 npm run dev
-```
-
-Configurer `PRESENTER_PASSWORD_HASH` dans `.env.local` avec le SHA-256 hexadécimal du mot de passe présentateur (jamais dans une variable `NEXT_PUBLIC_`). Ouvrir `http://localhost:3000`, puis **Espace présentateur**, saisir le mot de passe, choisir un format et créer une salle. La création d’une salle associe le navigateur du présentateur à cette salle. Conserver ce navigateur et ses cookies pour la reprendre.
-
-La configuration locale actuelle utilise l’adresse Wi-Fi `http://192.168.100.174:3000` pour les QR codes. La modifier dans `.env.local` si l’ordinateur change d’adresse. « Reprendre la salle » retrouve la dernière salle créée dans ce navigateur.
-
-Pour utiliser la version compilée, arrêter le serveur de développement puis lancer :
-
-```powershell
-npm run build
-npm start
-```
-
-Cela reste une installation locale. Aucun compte cloud ni identifiant Supabase n’est nécessaire.
-
-## Jouer sur téléphone sur le réseau local
-
-1. Connecter l’ordinateur et les téléphones au même Wi-Fi, ou au même point d’accès.
-2. Trouver l’adresse IPv4 locale de l’ordinateur avec `ipconfig` — par exemple `192.168.1.20`.
-3. Créer `.env.local` avec `NEXT_PUBLIC_APP_URL=http://192.168.1.20:3000`. Utiliser l’adresse réelle de l’ordinateur. Redémarrer le serveur ; refaire le build si vous utilisez `npm start`.
-4. Ouvrir également cette adresse sur l’ordinateur, puis créer une salle « Sur téléphone ».
-5. Scanner le QR code ou ouvrir l’adresse de participation affichée, puis choisir un pseudo.
-
-Les scripts écoutent sur `0.0.0.0`. L’accès dépend du pare-feu Windows et de l’autorisation des communications entre appareils sur le Wi-Fi ; certains réseaux invités les bloquent. `localhost` désigne le téléphone lui-même et ne permet pas de rejoindre l’ordinateur. Un changement d’adresse IP demande de mettre à jour l’URL et de redémarrer.
-
-## Présenter
-
-Les flèches **→ / ←** font avancer ou reculer les 36 étapes. Une question comporte une ouverture puis une fermeture avec résultats et explication. Chaque défi dure 15 secondes ; le serveur refuse les réponses tardives et affiche les résultats automatiquement à la prochaine synchronisation. Fermer dans les dix premières secondes demande une seconde pression sur **→** ; **Échap** annule. **P** met en pause le chronomètre général, pas celui de la question. **R** retrouve l’état du serveur.
-
-Le mode équipes enregistre un choix collectif, sa justification et un rappel collectif. Il ne mesure pas les résultats individuels de chaque équipe. Le mode téléphone enregistre une réponse par participant et par question. Un choix ET une justification corrects rapportent `round(1000 × (1 − 0,5 × secondes écoulées / 15))`, soit de 500 à 1 000 points avant la limite. Une erreur ou un délai dépassé rapporte 0. Les votes ne rapportent pas de points. Pour le rappel, multiplier ce score par la proportion de formes correctes, sans doublons. Le temps est mesuré par le serveur, jusqu’à la validation complète.
-
-Consulter [le guide des présentateurs](docs/presenter-cheatsheet.md) pour le déroulé et les raccourcis.
-
-## Données et limites
-
-En mode local, les salles, pseudos, réponses et états sont enregistrés dans `.data/rehearsal.json` sur l’ordinateur serveur. `DEMO_DATA_DIR` permet de choisir un autre dossier. La sauvegarde est un fichier JSON avec écritures sérialisées pour **un seul processus Node** : ne pas utiliser plusieurs instances ou un hébergement à système de fichiers éphémère.
-
-Un cookie HTTP-only de 30 jours contient une identité aléatoire ; seule son empreinte est conservée dans les salles. Ce mécanisme reconnaît un navigateur sur une origine donnée. Ce n’est pas un compte et il ne permet pas de récupérer une identité après suppression du cookie ou changement d’appareil. Le lien vers un compte, la récupération et les comptes permanents ne sont pas implémentés.
-
-Le participant peut demander la suppression de ses réponses et de sa participation à une salle depuis `/me`. Il n’y a pas de purge automatique des salles : pour effacer toute l’installation, arrêter le serveur puis supprimer son fichier `rehearsal.json`. Cela supprime toutes les salles de ce fichier. Voir aussi [la page de confidentialité](src/app/privacy/page.tsx).
-
-Le serveur arbitre la navigation, les réponses et la correction ; les navigateurs interrogent régulièrement son état. Le contrôle est réservé à un onglet du présentateur à la fois. Le stockage partagé Netlify est déployé et vérifié sur le site public avec trois sessions indépendantes. L’authentification récupérable n’est pas implémentée. En ligne, les données sont conservées dans Postgres sans purge automatique ; chaque participant peut effacer sa participation depuis son bilan. Voir [l’état d’implémentation](docs/implementation-status.md).
-
-## Vérification du déploiement
-
-Le 10 octobre 2026 : 55 tests unitaires/API/Postgres/authentification/chronométrage, lint et compilation de production en mode en ligne passent. Les six scénarios navigateur passent, dont authentification et clôture automatique après 15 secondes. Sur l’URL HTTPS publique : création d’une salle, trois inscriptions et réponses simultanées, persistance après relecture, publication des résultats, affichage mobile 390 px et suppression des participations de test vérifiés. Il s’agit de sessions simulées ; aucun test sur des téléphones physiques utilisant la 4G n’a été effectué.
-
-## Développement et vérification
-
-```powershell
 npm run lint
 npm run typecheck
 npm test
@@ -80,8 +40,14 @@ npm run test:e2e
 npm run build
 ```
 
-**Vérifié le 9 octobre 2026 :** lint et TypeScript sans erreurs ; 47 tests unitaires/API et 5 scénarios Playwright passent. Compilation de production réussie. Le parcours complet tient sur des écrans 1920×1080, 1366×768 et 1024×768. Trois sessions de navigateur indépendantes ont joué, actualisé leurs réponses, terminé le rappel des huit formes et consulté leur carnet.
+Les tests navigateur utilisent Edge sur Windows, un serveur sur le port 3100, un mot de passe de test et des dossiers isolés .next-e2e/.data-e2e. Les sorties et données de test sont ignorées par Git.
 
-Sous Windows, Playwright utilise Microsoft Edge installé. Sur les autres systèmes, installer Chromium avec `npx playwright install chromium`. Les captures sont dans `artifacts/`. Le [rapport de vérification](docs/verification.md) distingue les simulations locales des essais sur appareils physiques encore nécessaires.
+Le stockage local JSON convient à un seul processus. En ligne : Postgres Netlify, transactions et verrouillage par salle. La fonction planifiée cleanup-rooms supprime les données obsolètes toutes les cinq minutes. La création de salle reste protégée par le mot de passe présentateur.
 
-Contenu : `src/content/`. Correction côté serveur : `src/lib/answer-keys.ts` et `src/lib/grading.ts`. État et sauvegarde : `src/lib/engine.ts` et `src/lib/store.ts`. [handoff.md](handoff.md) conserve la spécification et l’historique des exigences ; son encadré initial précise les demandes les plus récentes.
+## Médias et publication
+
+Originaux : photo/ ; versions optimisées et vidéo : public/media/. Crédits publics : /media/credits.html. La photo de couture illustre le travail ; elle ne représente pas Veronika Scott ni son organisation. Vidéo fournie par l’organisateur.
+
+Voir [les sources](docs/story-sources.md), [le guide](docs/presenter-cheatsheet.md) et [le handoff](handoff.md). Les anciens documents de pres/ sont des références historiques.
+
+Publication : export propre du code committé vers le site Netlify existant, via le MCP officiel. Un push GitHub seul ne publie pas le site. Ne jamais exporter .env, .data ou .tools.

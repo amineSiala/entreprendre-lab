@@ -45,9 +45,9 @@ test("QR lobby shows arrivals, fits a full class, and waits for the presenter to
     await expect(page.locator(".lobby-player")).toHaveCount(59);
     await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "welcome");
     await page.getByRole("button", { name: "Commencer", exact: true }).click();
-    await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "opening-open");
+    await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat", "story-1-teaser");
     const started = await (await clients[1].get(`/api/rooms/${code}`)).json();
-    expect(started.round.state).toBe("open");
+    expect(started.round).toBeUndefined();
     expect(started.lobbyParticipants).toBeUndefined();
   } finally { await Promise.all(clients.map(client => client.dispose())); }
 });
