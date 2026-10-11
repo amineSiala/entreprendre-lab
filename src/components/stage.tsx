@@ -9,12 +9,13 @@ import { api, Brand, DemoBadge, Modal } from "@/components/common";
 import { Lobby } from "@/components/lobby";
 import { LeaderboardBeat } from "@/components/leaderboard";
 import { StoryBeat, ClosingBeat } from "@/components/story";
+import { PitchStage } from "@/components/pitch";
 import { beats } from "@/content/beats.fr";
 import { characters, chapters } from "@/content/curriculum.fr";
 import { questions } from "@/content/questions.fr";
 import { stageKey } from "@/lib/keyboard";
 import { browserId } from "@/lib/browser-id";
-import type { Question, RoomState, SafeRound } from "@/types/domain";
+import type { PitchCommand, Question, RoomState, SafeRound } from "@/types/domain";
 
 const shapes = ["▲", "◆", "●", "■"];
 const colors = ["coral", "blue", "yellow", "mint"];
@@ -40,6 +41,8 @@ export function Stage({ code }: { code: string }) {
   const recallOpen = beat.kind === "recall-open";
   const question = beat.questionId ? questions[beat.questionId] : undefined;
   const round = fallbackIndex === null ? state?.round : undefined;
+  const pitchLocked = fallbackIndex === null && beat.kind === "pitch" && state?.pitch?.phase !== "revealed";
+  const pitchActive = pitchLocked && state?.pitch?.phase !== "setup";
   const joinUrl = `${origin}/join/${code}`;
 
   const applyState = useCallback((value: RoomState) => {
@@ -92,7 +95,7 @@ export function Stage({ code }: { code: string }) {
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") { setModal(null); setConfirmTarget(null); earlyRef.current = false; setEarly(false); return; }
       const target = event.target as HTMLElement | null;
-      if (target?.closest("video, [data-video-controls]")) return;
+      if (target?.closest("video, [data-video-controls], [data-pitch-controls]")) return;
       if (event.key === " " && target?.closest("button, a[href]")) return;
       const typing = !!target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false']), dialog, [role='dialog']");
       if (modal || confirmTarget !== null) return;
@@ -113,6 +116,14 @@ export function Stage({ code }: { code: string }) {
   }, [navigate, fullscreen, sync, modal, confirmTarget]);
 
   async function copyLink() { try { await navigator.clipboard.writeText(joinUrl); setNotice("Lien copié."); } catch { setNotice("Copiez le lien affiché sous le QR code."); } }
+  async function pitchCommand(operation: PitchCommand) {
+    const value = stateRef.current;
+    if (!value || pending.current || !value.canControl || fallbackIndex !== null || expiredRef.current) return;
+    pending.current = true; setBusy(true);
+    try { applyState(await api<RoomState>(code, { action: "pitch", controller, version: value.version, operation })); }
+    catch (e) { fail(e); setNotice((e as Error).message); void sync(); }
+    finally { pending.current = false; setBusy(false); }
+  }
 
   if (expired) return <main className="loading-screen"><Brand /><h1>Cette salle a expiré.</h1><p>Une salle dure quatre heures. Créez une nouvelle salle pour continuer.</p><Link className="button primary" href="/">Retour à l’accueil</Link></main>;
   if (!state) return <main className="loading-screen"><Brand /><div className="loading-mark">✳</div><h1>{error ? "La salle n’est pas accessible." : "On prépare les histoires…"}</h1><p>{error || "Votre présentation arrive."}</p><div className="hero-actions"><button className="button primary" onClick={() => void sync()}>Réessayer <RotateCcw size={17} /></button><Link className="button secondary" href="/">Accueil</Link></div></main>;
@@ -120,19 +131,20 @@ export function Stage({ code }: { code: string }) {
   return <main className={`stage-shell ${beat.kind === "recall-open" ? "recall-stage" : ""}`}>
     <header className="stage-header"><Brand /><div className="stage-header-center"><span className="session-pill"><Smartphone size={15} />Salle {code}</span><DemoBadge /></div><div className="stage-status"><span className="participant-count"><Users size={16} />{state.participants} <span>participant{state.participants !== 1 ? "s" : ""}</span></span><span className={`connection-dot ${connected ? "" : "lost"}`} title={connected ? "Serveur connecté" : "Connexion interrompue"} aria-label={connected ? "Serveur connecté" : "Déconnecté"} /></div></header>
     {(!connected || fallbackIndex !== null || !state.canControl) && <div className="stage-alert" role="status">{fallbackIndex !== null ? <><WifiOff size={17} /> Diapositives hors ligne · votes et sauvegarde suspendus.<button onClick={() => { setFallbackIndex(null); void sync(); }}>Revenir au serveur</button></> : !connected ? <><WifiOff size={17} /> {error}<button onClick={() => setFallbackIndex(state.index)}>Continuer hors ligne</button></> : <>Un autre onglet pilote cette salle. Lecture seule jusqu’à sa fermeture (8 s maximum).</>}</div>}
-    <section className={`stage-canvas canvas-${beat.kind}`} data-beat={ranking ? `${beat.questionId}-leaderboard` : beat.id} aria-label={`Chapitre ${beat.chapter} : ${beat.title}`}>
+    <section className={`stage-canvas canvas-${beat.kind}`} data-beat={ranking ? `${beat.questionId ?? "pitch"}-leaderboard` : beat.id} aria-label={`Chapitre ${beat.chapter} : ${beat.title}`}>
       <div className="beat-motion" key={ranking ? `${beat.id}-ranking` : beat.id}>
-        {ranking ? <LeaderboardBeat board={state.leaderboard} questionId={beat.questionId!} /> : <>
+        {ranking ? <LeaderboardBeat board={state.leaderboard} questionId={beat.questionId ?? "pitch"} /> : <>
         {beat.kind === "title" && <Lobby code={code} url={joinUrl} names={fallbackIndex === null ? state.lobbyParticipants ?? [] : []} count={state.participants} copy={copyLink} start={() => void navigate(1)} disabled={busy || !connected || !state.canControl || fallbackIndex !== null} />}
         {["teaser", "story", "reveal"].includes(beat.kind) && <StoryBeat beat={beat} />}
         {beat.kind === "conclusion" && <ClosingBeat />}
+        {beat.kind === "pitch" && (fallbackIndex === null && state.pitch ? <PitchStage pitch={state.pitch} disabled={busy || !connected || !state.canControl} command={pitchCommand} /> : <div className="empty-results"><h1>Le défi des équipes est sur le serveur.</h1><p>Reconnectez-vous pour composer les équipes et enregistrer les votes.</p></div>)}
         {question && beat.kind === "question-open" && <QuestionBeat key={question.id} question={question} state={state} round={round} now={now} />}
         {question && beat.kind === "recall-open" && <RecallBeat key={question.id} question={question} state={state} round={round} now={now} />}
         {question && ["question-results", "question-explain", "recall-results"].includes(beat.kind) && (fallbackIndex !== null ? <div className="empty-results"><WifiOff size={46} /><h1>Les résultats sont sur le serveur.</h1><p>Reconnectez-vous pour les retrouver. Aucune réponse n’est enregistrée hors ligne.</p></div> : <ResultsBeat question={question} state={state} round={round} />)}
         </>}
       </div>
     </section>
-    <footer className="stage-footer"><div className="stage-footer-left"><button className="icon-button" title="Les chapitres" aria-label="Les chapitres" onClick={() => setModal("chapters")} disabled={recallOpen}><Layers3 size={19} /></button><span className="chapter-number">{String(beat.chapter).padStart(2, "0")} <span>/ {chapters.length}</span></span><span className="chapter-name">{recallOpen ? "À vous de retrouver" : chapters[beat.chapter - 1]}</span></div><div className="chapter-progress" aria-label={`Chapitre ${beat.chapter} sur ${chapters.length}`}>{chapters.map((_, i) => <span key={i} className={i + 1 < beat.chapter ? "done" : i + 1 === beat.chapter ? "current" : ""} />)}</div><div className="stage-footer-right"><button className="clock-button" onClick={() => setPaused(p => !p)} title={paused ? "Reprendre le chrono" : "Mettre le chrono en pause"}>{paused ? <Play size={13} /> : <Pause size={13} />} {formatTime(clock)}</button><button className="icon-button quiet-control" aria-label="Aide et raccourcis" onClick={() => setModal("help")}><HelpCircle size={18} /></button><button className="icon-button quiet-control" aria-label="Plein écran" onClick={() => void fullscreen()}><Maximize size={18} /></button><div className="navigation-buttons"><button aria-label="Étape précédente" disabled={currentIndex === 0 || busy || (!state.canControl && fallbackIndex === null)} onClick={() => { earlyRef.current = false; setEarly(false); void navigate(-1); }}><ChevronLeft size={23} /></button><button aria-label="Étape suivante" disabled={currentIndex === beats.length - 1 || busy || (!state.canControl && fallbackIndex === null)} onClick={() => void navigate(1)}><ChevronRight size={23} /></button></div></div></footer>
+    <footer className="stage-footer"><div className="stage-footer-left"><button className="icon-button" title="Les chapitres" aria-label="Les chapitres" onClick={() => setModal("chapters")} disabled={recallOpen || pitchActive}><Layers3 size={19} /></button><span className="chapter-number">{String(beat.chapter).padStart(2, "0")} <span>/ {chapters.length}</span></span><span className="chapter-name">{recallOpen ? "À vous de retrouver" : chapters[beat.chapter - 1]}</span></div><div className="chapter-progress" aria-label={`Chapitre ${beat.chapter} sur ${chapters.length}`}>{chapters.map((_, i) => <span key={i} className={i + 1 < beat.chapter ? "done" : i + 1 === beat.chapter ? "current" : ""} />)}</div><div className="stage-footer-right"><button className="clock-button" onClick={() => setPaused(p => !p)} title={paused ? "Reprendre le chrono" : "Mettre le chrono en pause"}>{paused ? <Play size={13} /> : <Pause size={13} />} {formatTime(clock)}</button><button className="icon-button quiet-control" aria-label="Aide et raccourcis" onClick={() => setModal("help")}><HelpCircle size={18} /></button><button className="icon-button quiet-control" aria-label="Plein écran" onClick={() => void fullscreen()}><Maximize size={18} /></button><div className="navigation-buttons"><button aria-label="Étape précédente" disabled={currentIndex === 0 || pitchActive || busy || (!state.canControl && fallbackIndex === null)} onClick={() => { earlyRef.current = false; setEarly(false); void navigate(-1); }}><ChevronLeft size={23} /></button><button aria-label="Étape suivante" disabled={currentIndex === beats.length - 1 || pitchLocked || busy || (!state.canControl && fallbackIndex === null)} onClick={() => void navigate(1)}><ChevronRight size={23} /></button></div></div></footer>
     <div className="beat-counter">{currentIndex + 1} / {beats.length} étapes <span>·</span> ← → pour avancer</div>
     {early && <div className="toast early-toast" role="status"><Clock3 size={19} /><span>Moins de 10 secondes. <strong>Encore → pour fermer</strong>, ou laissez réfléchir.</span><button aria-label="Annuler la fermeture" onClick={() => { earlyRef.current = false; setEarly(false); }}><X size={17} /></button></div>}
     {notice && <div className="toast" role="status">{notice}</div>}

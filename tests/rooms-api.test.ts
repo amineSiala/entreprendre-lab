@@ -60,6 +60,64 @@ async function control(browser: Browser, code: string, controller = randomUUID()
   return controller;
 }
 
+describe("team pitch API", () => {
+  it("persists teams and private editable ratings, rejects unauthorized control, and awards only once", async () => {
+    const host: Browser = {}, players: Browser[] = [{}, {}, {}], audience: Browser = {};
+    const code = await create(host), controller = await control(host, code);
+    for (let i = 0; i < 3; i++) await request(players[i], code, { action: "join", nickname: i < 2 ? "Même nom" : "Troisième" });
+    let state = (await request(host, code, { action: "move", controller, version: 0, direction: 1, target: beats.findIndex(b => b.kind === "pitch") })).payload;
+    const operation = async (operation: object) => {
+      const result = await request(host, code, { action: "pitch", controller, version: state.version, operation });
+      expect(result.response.status).toBe(200); state = result.payload; return result;
+    };
+    const roster = state.pitch!.roster!;
+    expect(new Set(roster.map(m => m.id)).size).toBe(3);
+    expect((await request(players[0], code, { action: "pitch", controller, version: state.version, operation: { command: "start", team: 1 } })).response.status).toBe(403);
+    expect((await request(host, code, { action: "pitch", controller: randomUUID(), version: state.version, operation: { command: "start", team: 1 } })).response.status).toBe(409);
+    for (let i = 0; i < 3; i++) await operation({ command: "assign", participantId: roster[i].id, team: i + 1 });
+    expect((await request(host, code)).payload.pitch!.roster!.map(m => m.team)).toEqual([1, 2, 3]);
+    await operation({ command: "select", selection: "review" }); await operation({ command: "confirm", team: 1 });
+    await request(audience, code, { action: "join", nickname: "Arrivée tardive" });
+    for (const team of [1, 2, 3]) {
+      await operation({ command: "start", team }); await operation({ command: "open", team });
+      expect((await request(players[team - 1], code, { action: "rate-pitch", team, rating: 10, revision: 1 })).response.status).toBe(403);
+      expect((await request(audience, code, { action: "rate-pitch", team, rating: 10.5, revision: 1 })).response.status).toBe(422);
+      const changes = await Promise.all([2, 1].map(revision => request(audience, code, { action: "rate-pitch", team, rating: revision === 2 ? 7 : 1, revision })));
+      expect(changes[0].response.status).toBe(200);
+      const own = (await request(audience, code)).payload.pitch!; expect(own.ownVote).toEqual({ rating: 7, revision: 2 });
+      const peer = (await request(players[0], code)).payload;
+      expect(peer.pitch).not.toHaveProperty("ownVote"); expect(peer.pitch!.teams[team - 1]).not.toHaveProperty("average"); expect(peer.xp).toBe(0);
+      await operation({ command: "close", team });
+      expect((await request(audience, code, { action: "rate-pitch", team, rating: 8, revision: 3 })).response.status).toBe(409);
+    }
+    expect((await request(players[0], code)).payload.xp).toBe(0);
+    const oldVersion = state.version;
+    await operation({ command: "reveal", team: 3 });
+    const retry = await request(host, code, { action: "pitch", controller, version: oldVersion, operation: { command: "reveal", team: 3 } });
+    expect(retry.response.status).toBe(200); expect(retry.payload.version).toBe(state.version);
+    for (const p of players) expect((await request(p, code)).payload.xp).toBe(4900);
+    expect((await request(audience, code)).payload.xp).toBe(0);
+    await request(audience, code, { action: "forget" });
+    expect((await request(host, code)).payload.pitch!.teams[0]).toMatchObject({ count: 1, average: 7, bonus: 4900 });
+  });
+  it("persists additive old-room upgrades on GET and expires active voting exactly at four hours", async () => {
+    const host: Browser = {}, code = await create(host), file = path.join(dataDirectory, "rehearsal.json");
+    const data = JSON.parse(await readFile(file, "utf8"));
+    delete data.sessions[code].payloadRevision; data.sessions[code].index = 45;
+    await writeFile(file, JSON.stringify(data));
+    expect((await request(host, code)).payload.index).toBe(beats.length - 1);
+    const upgraded = JSON.parse(await readFile(file, "utf8")); expect(upgraded.sessions[code].payloadRevision).toBe(2);
+    upgraded.sessions[code].index = beats.findIndex(b => b.kind === "pitch");
+    upgraded.sessions[code].pitch = { phase: "voting", activeTeam: 1, selection: "review", assignments: {}, votes: {}, results: {} };
+    const created = upgraded.sessions[code].createdAt; await writeFile(file, JSON.stringify(upgraded));
+    vi.spyOn(Date, "now").mockReturnValue(created + 4 * 60 * 60 * 1000 - 1);
+    expect((await request(host, code)).response.status).toBe(200);
+    vi.mocked(Date.now).mockReturnValue(created + 4 * 60 * 60 * 1000);
+    expect((await request(host, code)).response.status).toBe(410);
+    expect(JSON.parse(await readFile(file, "utf8")).sessions[code]).toBeUndefined();
+  });
+});
+
 async function open(browser: Browser, code: string, controller: string, questionId = "individual", version = 0) {
   const target = beats.findIndex(beat => beat.questionId === questionId && beat.kind.endsWith("-open"));
   const result = await request(browser, code, { action: "move", direction: 1, version, controller, target });

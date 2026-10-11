@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clock3, Eye, Flag, Lightbulb, LoaderCircle, LockKeyhole, Radio, RefreshCw, Smartphone, Sparkles, Trash2, Trophy, Users, WifiOff } from "lucide-react";
 import { api, Brand, DemoBadge, LocalNotice, Modal } from "@/components/common";
 import { AnswerEditor } from "@/components/answer-editor";
+import { PitchPhone } from "@/components/pitch";
 import { questions } from "@/content/questions.fr";
 import type { FormId, Question, RoomState, SafeRound } from "@/types/domain";
 import "./student.css";
@@ -45,6 +46,7 @@ function useRoom(code: string | undefined) {
     if (Date.now() >= next.expiresAt) { fail(Object.assign(new Error("Cette salle a expiré."), { code: "ROOM_EXPIRED" })); return; }
     setRoom(previous => {
       if (previous?.code === next.code && previous.version > next.version) return previous;
+      if (previous && previous.pitch?.activeTeam === next.pitch?.activeTeam && previous.version === next.version && next.pitch && (previous.pitch?.ownVote?.revision ?? 0) > (next.pitch.ownVote?.revision ?? 0)) return { ...next, pitch: { ...next.pitch, ownVote: previous.pitch!.ownVote } };
       // A poll initiated before an answer must never erase its acknowledgement.
       if (previous?.code === next.code && previous.version === next.version && previous.round?.questionId === next.round?.questionId && previous.round?.submission && next.round && (!next.round.submission || previous.round.submission.at > next.round.submission.at || (previous.round.submission.finalized && !next.round.submission.finalized))) {
         return { ...next, round: { ...next.round, submission: previous.round.submission } };
@@ -105,11 +107,11 @@ export function StudentJoin({ code: rawCode }: { code: string }) {
     <section className="student-join-card">
       <div className="student-ticket-art" aria-hidden="true"><span className="student-art-star">✳</span><Smartphone size={66} strokeWidth={1.7} /><span className="student-art-dot">!</span></div>
       <p className="eyebrow">VOTRE PLACE DANS LA PARTIE</p><h1>La partie<br />vous attend<span>.</span></h1>
-      <p className="student-intro">Touchez votre réponse : 20 secondes, jusqu’à 1 000 points par quiz. Le rappel final dure 2 minutes : validez pour gagner jusqu’à 8 000 points. La salle dure 4 heures.</p>
+      <p className="student-intro">Touchez votre réponse : 20 secondes, jusqu’à 1 000 points par quiz. Le rappel final dure 2 minutes : jusqu’à 8 000 points. Le pitch d’équipe rapporte jusqu’à 7 000 points par membre selon les notes du public. La salle dure 4 heures.</p>
       {valid ? <form className="student-join-form" onSubmit={join}>
         <label htmlFor="student-nickname">Comment vous appelle-t-on ?</label>
         <input id="student-nickname" placeholder="Votre pseudo" minLength={2} maxLength={24} value={nickname} onChange={event => setNickname(event.target.value)} autoComplete="nickname" required disabled={busy} aria-describedby="nickname-hint" />
-        <p id="nickname-hint" className="student-field-hint">Votre pseudo et vos points peuvent apparaître au classement sur le projecteur, avec une taquinerie pour la dernière place.</p>
+        <p id="nickname-hint" className="student-field-hint">Votre pseudo, votre équipe et vos points peuvent apparaître sur le projecteur. Après la confirmation des équipes, les nouveaux arrivants restent dans le public et ne gagnent pas de bonus de pitch.</p>
         {error && <p role="alert" className="error-message">{error}</p>}
         <button className="button primary" disabled={busy || nickname.trim().length < 2} type="submit">{busy ? <LoaderCircle className="student-spin" size={19} /> : <ArrowRight size={19} />}{busy ? "On vous fait une place…" : "J’entre dans la partie"}</button>
       </form> : <div className="note-box"><p>Ce code ne correspond pas à une salle. Il doit contenir les six caractères affichés sur le projecteur.</p><Link className="button secondary" href="/">Saisir un autre code <ArrowRight size={17} /></Link></div>}
@@ -156,7 +158,7 @@ export function StudentRoom({ code: rawCode }: { code: string }) {
     {error && <ConnectionNotice error={error} retry={() => void refresh()} />}
     {!room ? error ? <section className="student-card student-empty"><Radio size={36} /><h1>Retrouvons votre salle.</h1><p>Vérifiez le code et votre connexion. {connectionHint}</p><Link href={`/join/${code}`} className="button primary">Rejoindre la salle <ArrowRight size={17} /></Link><Link href="/" className="student-back">Retour à l’accueil</Link></section> : <div className="student-loading" role="status"><LoaderCircle className="student-spin" size={28} /><p>Connexion à la partie…</p></div> : room.role === "host" ? <section className="student-card student-empty"><Users size={35} /><h1>Vous êtes le présentateur.</h1><p>Pour participer, ouvrez ce lien sur un autre appareil ou dans une fenêtre privée.</p><Link className="button primary" href={`/host/session/${code}/stage`}>Retour au projecteur <ArrowRight size={18} /></Link></section> : <>
       <div className="student-player-strip"><span><span className="student-avatar">{saved?.code === code ? saved.nickname.slice(0, 1).toUpperCase() : "✳"}</span><b className="student-player-name">{saved?.code === code ? saved.nickname : "Dans la partie"}</b></span><span><Sparkles size={15} />{room.xp ?? 0} points</span></div>
-      {room.ended ? <section className="student-card student-waiting"><div className="student-success-icon"><Trophy size={38} /></div><p className="eyebrow">PARCOURS TERMINÉ</p><h1>Huit formes.<br /><span>À vous d’entreprendre.</span></h1><p>Retrouvez vos points et les formes reconnues ou rappelées dans votre carnet personnel.</p><Link href="/me" className="button primary">Voir mon carnet <ArrowRight size={17} /></Link></section> : !round || !question ? <Waiting nickname={saved?.code === code ? saved.nickname : undefined} /> : round.state === "revealed" ? <Revealed key={round.questionId} question={question} round={round} /> : round.submission && (question.kind !== "recall" || round.submission.finalized) ? <Submitted question={question} round={round} /> : <AnswerEditor key={round.questionId} question={question} round={round} code={code} accept={accept} timer={<Timer question={question} openedAt={round.openedAt} />} />}
+      {room.pitch ? <PitchPhone key={room.pitch.activeTeam} code={code} pitch={room.pitch} accept={accept} /> : room.ended ? <section className="student-card student-waiting"><div className="student-success-icon"><Trophy size={38} /></div><p className="eyebrow">PARCOURS TERMINÉ</p><h1>Huit formes.<br /><span>À vous d’entreprendre.</span></h1><p>Retrouvez vos points et les formes reconnues ou rappelées dans votre carnet personnel.</p><Link href="/me" className="button primary">Voir mon carnet <ArrowRight size={17} /></Link></section> : !round || !question ? <Waiting nickname={saved?.code === code ? saved.nickname : undefined} /> : round.state === "revealed" ? <Revealed key={round.questionId} question={question} round={round} /> : round.submission && (question.kind !== "recall" || round.submission.finalized) ? <Submitted question={question} round={round} /> : <AnswerEditor key={round.questionId} question={question} round={round} code={code} accept={accept} timer={<Timer question={question} openedAt={round.openedAt} />} />}
     </>}
   </StudentShell>;
 }

@@ -49,6 +49,6 @@ export function LeaderboardBeat({ board, questionId }: { board?: Leaderboard; qu
       <section className="ranking-bottom"><h2>↗ Les 3 derniers</h2><p>La remontada commence ici.</p><div className="ranking-bottom-list">{board.bottom.map((entry, i) => <article className="ranking-row" key={i} style={{ "--delay": `${600 + i * 150}ms` } as CSSProperties}><span className="ranking-place">#{entry.rank}</span><h3>{entry.nickname}</h3><Score entry={entry} /></article>)}</div>{board.bottom.length < 3 && <p className="ranking-small-room">{board.total < 6 ? "Petite salle : chaque joueur apparaît une seule fois." : ""}</p>}</section>
     </div>
     <aside className="ranking-roast"><span className="roast-sticker" aria-hidden="true">🔥</span><div><p className="eyebrow">{allTied ? "DÉPART GROUPÉ" : "LA MINUTE ROAST"}</p><h2>{label}</h2><p>{allTied ? "Personne ne veut payer les points ? Belle solidarité, la classe !" : board.total === 1 ? "Seul en piste : première place garantie, pression maximale !" : joke}</p></div></aside>
-    <p className="ranking-next">← Revoir l’explication <span>→ Continuer la présentation</span></p>
+    <p className="ranking-next">← {questionId === "pitch" ? "Revoir les résultats des pitchs" : "Revoir l’explication"} <span>→ Continuer la présentation</span></p>
   </div>;
 }

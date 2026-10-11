@@ -1,5 +1,17 @@
 # Entreprendre.Lab — Full conversation handoff
 
+## Current update — three-team pitch challenge (11 October 2026)
+
+This section supersedes the earlier 46-beat count and conclusion ordering. The deck has 47 beats: the pitch activity follows the final recall leaderboard and precedes the existing closing video.
+
+- Select all current players into Team 1 (international), Team 2 (innovative), then Team 3 (partner entrepreneurship). Review and correct assignments before confirming three nonempty teams. Membership then locks. Late arrivals are audience only, can rate every team and receive no team bonus.
+- Each pitch starts manually. The presenter opens and closes its 1–10 vote, without a timer. Players cannot rate their own team. Taps autosave and remain editable until closure; revision numbers reject stale replacements. Individual votes stay private. Failed saves remain retryable.
+- After all three votes, collective reveal exposes averages/counts/ranks and awards `round(unroundedAverage / 10 * 7000)` points per member, exactly once. No votes yields zero. These points add to the quiz totals; → shows the updated individual leaderboard, then → opens the video.
+- Existing story rooms receive additive `payloadRevision: 2` upgrades and public participant UUIDs. Old final index 45 maps to the new conclusion index 46; prior answers/progress survive. GET requests now lock and persist rooms too, including upgrades and automatic quiz closure. No database table or lesson-version change is needed. Four-hour expiry and cleanup remain in force.
+- New room API: presenter `action: pitch` with controller/version and operations assign/select/confirm/start/open/close/reveal; student `action: rate-pitch` with team/rating/revision. Safe snapshots expose phase, team names, own vote and eligibility; aggregate averages and bonuses appear only after reveal. Identity hashes and peer votes never enter public pitch data.
+- Forgetting participation removes personal membership and votes. Closed anonymous aggregate counts/sums remain frozen, so other players' bonuses do not change.
+- Validation: 74 unit/API/Postgres tests, lint, TypeScript and online production build pass. All nine browser scenarios passed in one uninterrupted run, including all 47 beats, three projector sizes, four independent phones (320/390/430 px), vote failure/retry, refresh, privacy, late arrivals, bonuses, rankings, and the real 120-second recall timeout. NetlifyDB uses a single-session PGlite adapter, so its test pool is restricted to one connection; hosted multi-worker serialization still depends on the production FOR UPDATE row lock. Physical classroom hardware is not tested. Publication is pending at this checkpoint.
+
 ## Current update — company stories, final submission and four-hour rooms (11 October 2026)
 
 This section supersedes all historical curriculum, presenter-allocation, recall-timing, scoring and retention details below.

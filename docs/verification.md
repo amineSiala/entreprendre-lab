@@ -1,3 +1,14 @@
+# Verification — team pitch challenge (11 October 2026)
+
+- 74 unit/API/Postgres tests passed. Coverage includes team confirmation, duplicate names, private public IDs, own-team vote rejection, vote revision ordering, closure races, fractional averages, zero votes, idempotent reveal, cumulative points, deletion, additive upgrades and exact four-hour expiry.
+- Lint, TypeScript and online production build passed.
+- All nine Playwright scenarios passed in one uninterrupted run (4.4 minutes). The full 47-beat deck fits three projector sizes. The pitch rehearsal used four independent phones, including 320 px and a late audience member, and exercised reassignment, refresh, failed save/retry, rating edits, hidden results, all three pitches, 4,900/7,000/0 bonuses, rankings and the closing video.
+- Screenshots inspected: artifacts/pitch-teams.png and artifacts/pitch-results.png; phone screenshots also saved. These browser simulations do not replace testing physical classroom devices.
+- The NetlifyDB PGlite adapter shares one PostgreSQL session across sockets. Its test pool is limited to one connection to prevent interleaved BEGIN/COMMIT operations. These tests verify storage behavior; cross-worker production isolation relies on the actual Postgres FOR UPDATE lock.
+- Deployment checks pending at this checkpoint; see the latest handoff for publication details.
+
+---
+
 # Verification — revised company stories (11 October 2026)
 
 This section supersedes the historical lesson and timing checks below.

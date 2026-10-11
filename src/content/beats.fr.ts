@@ -15,5 +15,6 @@ export const beats: Beat[] = [
 ...storyBeats(3, 5, 4), ...quizBeats(["impact", "profit", "growth"], 5),
 ...storyBeats(5, 8, 6), ...quizBeats(["internal", "generations", "borders"], 7),
 ...quizBeats(["boss"], 8),
+{ id: "pitch", chapter: 9, kind: "pitch", title: "Trois équipes. Trois idées à défendre." },
 { id: "conclusion", chapter: 9, kind: "conclusion", title: "Tout commence par une occasion d’agir." },
 ];

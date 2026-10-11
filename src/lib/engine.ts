@@ -6,6 +6,7 @@ import { grade } from "@/lib/grading";
 import { presenterNotes } from "@/lib/presenter-notes";
 import type { Answer, FormId, RoomState, Round, Session } from "@/types/domain";
 import { expiresAt } from "./room-policy";
+import { ensurePitch, pitchBonus, safePitch } from "./pitch";
 
 export class RoomError extends Error {
   constructor(public status: number, message: string, public code = "ROOM_ERROR") { super(message); }
@@ -36,10 +37,12 @@ export function expireRounds(session: Session, now = Date.now()): Session {
 export function move(session: Session, expectedVersion: number, direction: -1 | 1, force = false, target?: number, now = Date.now()) {
   if (session.version !== expectedVersion) throw new RoomError(409, "La présentation a changé. Synchronisation en cours.", "STALE");
   const current = beats[session.index];
+  if (current.kind === "pitch" && session.pitch?.phase !== "revealed" && (direction > 0 || session.pitch && session.pitch.phase !== "setup"))
+    throw new RoomError(409, "Terminez les trois pitchs et révélez les résultats avant de continuer.");
   // Keep existing beat indices stable for persisted rooms and participant screens.
   if (target === undefined && session.leaderboardVisible && direction < 0)
     return { ...session, leaderboardVisible: false, version: session.version + 1 };
-  if (target === undefined && direction > 0 && !session.leaderboardVisible && current.kind.endsWith("-results") && current.questionId && session.rounds[current.questionId]?.state === "revealed")
+  if (target === undefined && direction > 0 && !session.leaderboardVisible && (current.kind === "pitch" && session.pitch?.phase === "revealed" || current.kind.endsWith("-results") && current.questionId && session.rounds[current.questionId]?.state === "revealed"))
     return { ...session, leaderboardVisible: true, version: session.version + 1 };
   const active = Object.values(session.rounds).find(round => round.state === "open");
   if (target !== undefined && active) throw new RoomError(409, "Fermez la question avec la flèche droite avant de changer de chapitre.");
@@ -63,7 +66,7 @@ export function move(session: Session, expectedVersion: number, direction: -1 | 
       if (round?.state === "open") closeRound(round, now);
     }
   }
-  return result;
+  return beat.kind === "pitch" ? ensurePitch(result) : result;
 }
 export function submit(session: Session, actor: string, questionId: string, answer: Answer, now = Date.now(), finalize = false) {
   const round = Object.hasOwn(session.rounds, questionId) ? session.rounds[questionId] : undefined;
@@ -93,20 +96,23 @@ export function snapshot(session: Session, actor: string, role: "host" | "studen
   const beat = beats[session.index], question = beat.questionId ? questions[beat.questionId] : undefined;
   const round = beat.questionId ? session.rounds[beat.questionId] : undefined;
   const state: RoomState = { expiresAt: expiresAt(session), id: session.id, code: session.code, mode: "phones", index: session.index, version: session.version, participants: Object.keys(session.members).length, role, ended: beat.kind === "conclusion" };
+  if (beat.kind === "pitch") state.pitch = safePitch(session, actor, role);
   if (role === "host") {
     if (beat.kind === "title") state.lobbyParticipants = Object.values(session.members).sort((a, b) => a.joinedAt - b.joinedAt).map(member => member.nickname);
     state.canControl = Boolean(session.controller && session.controller.id === controller && session.controller.until > Date.now());
     state.presenterNote = presenterNotes[beat.id];
     state.leaderboardVisible = !!session.leaderboardVisible;
-    if (round?.state === "revealed") {
+    if (round?.state === "revealed" || beat.kind === "pitch" && session.pitch?.phase === "revealed") {
       const rows = Object.entries(session.members).map(([id, member]) => {
         let points = 0, previousPoints = 0;
         for (const r of Object.values(session.rounds)) {
           if (r.state !== "revealed") continue;
           const earned = r.responses[id]?.feedback.xp ?? 0;
           points += earned;
-          if (r.questionId !== round.questionId) previousPoints += earned;
+          if (r.questionId !== round?.questionId) previousPoints += earned;
         }
+        points += pitchBonus(session, id);
+        if (beat.kind !== "pitch") previousPoints += pitchBonus(session, id);
         return { nickname: member.nickname, joinedAt: member.joinedAt, points, previousPoints };
       }).sort((a, b) => b.points - a.points || a.joinedAt - b.joinedAt || a.nickname.localeCompare(b.nickname, "fr"));
       const ranked = rows.map((row, index) => ({ nickname: row.nickname, points: row.points, previousPoints: row.previousPoints, rank: rows.findIndex(other => other.points === row.points) + 1, position: index }));
@@ -136,7 +142,7 @@ export function snapshot(session: Session, actor: string, role: "host" | "studen
   }
   if (role === "student") {
     const recognized = new Set<FormId>(), recalled = new Set<FormId>();
-    state.xp = 0;
+    state.xp = pitchBonus(session, actor);
     for (const r of Object.values(session.rounds)) {
       if (r.state !== "revealed" || !r.responses[actor]) continue;
       const f = r.responses[actor].feedback;

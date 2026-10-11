@@ -7,7 +7,8 @@ import { grade, normalize, recallForms } from "@/lib/grading";
 import { presenterNotes } from "@/lib/presenter-notes";
 describe("company-story curriculum", () => {
 it("contains eight three-step stories, nine quizzes, final recall and closing", () => {
-expect(beats).toHaveLength(46); expect(chapters).toHaveLength(9);
+expect(beats).toHaveLength(47); expect(chapters).toHaveLength(9);
+expect(beats.slice(-2).map(b=>b.kind)).toEqual(["pitch","conclusion"]);
 expect(characters.map(c=>c.id)).toEqual(questions.boss.forms);
 for(const person of characters) {
 expect(beats.filter(b=>b.character===person.id).map(b=>b.kind)).toEqual(["teaser","story","reveal"]);

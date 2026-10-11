@@ -7,6 +7,7 @@ import { RoomError } from "@/lib/engine";
 import { getDatabase } from "@netlify/database";
 import { isRetired, LESSON_VERSION } from "./room-policy";
 import { cleanupSql, cleanupParams } from "./room-cleanup";
+import { upgradeSession } from "./pitch";
 
 // Local rehearsal uses a file; hosted rooms use Postgres row locks across workers.
 type Database = { sessions: Record<string, Session> };
@@ -79,12 +80,12 @@ export function createSession(data: Database, hostHash: string, mode: PlayMode) 
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code: string;
   do { code = Array.from(randomBytes(6), byte => alphabet[byte % alphabet.length]).join(""); } while (data.sessions[code]);
-  const session: Session = { lessonVersion: LESSON_VERSION, id: randomUUID(), code, hostHash, mode, index: 0, version: 0, createdAt: Date.now(), members: {}, rounds: {} };
+  const session: Session = { payloadRevision: 2, lessonVersion: LESSON_VERSION, id: randomUUID(), code, hostHash, mode, index: 0, version: 0, createdAt: Date.now(), members: {}, rounds: {} };
   data.sessions[code] = session;
   return session;
 }
 export function getSession(data: Database, code: string) {
   const session = data.sessions[code];
   if (!session || isRetired(session)) throw new RoomError(410, "Cette salle a expiré ou n’existe plus. Les salles durent quatre heures. Rejoignez une nouvelle salle.", "ROOM_EXPIRED");
-  return session;
+  return data.sessions[code] = upgradeSession(session);
 }

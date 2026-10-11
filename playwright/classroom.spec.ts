@@ -1,12 +1,27 @@
 import { test,expect } from "@playwright/test";
 import { beats } from "../src/content/beats.fr";
 import { characters } from "../src/content/curriculum.fr";
-import { start,next,jump } from "./helpers";
-test("all 46 steps fit projectors; identities wait for reveal; video plays with keyboard controls",async({page})=>{
-await page.setViewportSize({width:1366,height:768});await start(page);
+import { start,next,jump,join } from "./helpers";
+test("all 47 steps fit projectors; identities wait for reveal; video plays with keyboard controls",async({page,browser})=>{
+await page.setViewportSize({width:1366,height:768});const code=await start(page);
+const contexts=await Promise.all([1,2,3].map(()=>browser.newContext()));
+for(let i=0;i<3;i++)await join(await contexts[i].newPage(),code,`Pitch ${i+1}`);
 const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));const overflow:string[]=[];
 for(let i=0;i<beats.length;i++){
 const beat=beats[i];if(i)await next(page,beat.id);
+if(beat.kind==="pitch"){
+for(let n=1;n<=3;n++){
+await page.getByRole("button",{name:`Pitch ${n}, sans équipe`,exact:true}).click();
+await page.getByRole("button",{name:n===3?"Vérifier les équipes":`Choisir l’équipe ${n+1}`,exact:true}).click();
+}
+await page.getByRole("button",{name:"Confirmer les équipes",exact:true}).click();
+for(let n=1;n<=3;n++){
+await page.getByRole("button",{name:`Commencer le pitch de l’équipe ${n}`,exact:true}).click();
+await page.getByRole("button",{name:`Ouvrir le vote pour l’équipe ${n}`,exact:true}).click();
+await page.getByRole("button",{name:"Fermer le vote",exact:true}).click();
+}
+await page.getByRole("button",{name:"Révéler les résultats",exact:true}).click();
+}
 if(beat.kind==="teaser"||beat.kind==="story"){
 const person=characters.find(c=>c.id===beat.character)!;
 await expect(page.locator(".stage-canvas")).not.toContainText(person.company);
@@ -30,9 +45,10 @@ await video.focus();await page.keyboard.press("ArrowLeft");
 await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","conclusion");
 await page.evaluate(()=>{(window as unknown as {closingVideo:HTMLVideoElement}).closingVideo=document.querySelector("video")!;});
 await page.getByRole("button",{name:"Étape précédente",exact:true}).click();
-await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","boss-results");
+await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","pitch");
 expect(await page.evaluate(()=>(window as unknown as {closingVideo:HTMLVideoElement}).closingVideo.paused)).toBe(true);
-await page.reload();await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","boss-results");
+await page.reload();await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","pitch");
+for(const c of contexts)await c.close();
 });
 test("controller lease and offline preview do not fabricate results",async({page,context})=>{
 const code=await start(page);const second=await context.newPage();await second.goto(`/host/session/${code}/stage`);
