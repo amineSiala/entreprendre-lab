@@ -69,7 +69,7 @@ test("three teams pitch, edit private ratings, recover saves, reveal bonuses and
     await page.reload(); await expect(page.locator(".team-1 .pitch-average")).toHaveText("7,0/10");
     await next(page, "pitch-leaderboard"); await expect(page.locator(".ranking-top")).toContainText("Bilal");
     await next(page, "instadeep-teaser"); await expect(page.locator(".tunisian-teaser")).toContainText("680 millions de dollars");
-    await next(page, "instadeep-reveal"); await expect(page.locator(".instadeep-layout")).toContainText("Une même entreprise peut réunir plusieurs formes d’entrepreneuriat.");
+    await next(page, "instadeep-reveal"); await expect(page.locator(".instadeep-layout")).toContainText("InstaDeep : une startup tunisienne, trois façons d’entreprendre");
     await expect(phones[0].locator(".student-player-strip")).toContainText("4900 points");
     await next(page, "conclusion"); await expect(page.locator("video")).toBeVisible();
   } finally { for (const c of contexts) await c.close(); }

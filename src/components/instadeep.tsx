@@ -15,8 +15,6 @@ export function InstaDeepBeat() {
       const Icon = icons[index];
       return <article key={form.id} className={`instadeep-card instadeep-team-${index + 1}`}><div className="instadeep-card-top"><Icon size={30} aria-hidden="true" /><span>ÉQUIPE {index + 1}</span></div><h2>{form.label}</h2><p>{form.text}</p></article>;
     })}</div>
-    <aside className="instadeep-acquisition"><strong>{instadeep.acquisition}</strong><p>{instadeep.deal}</p></aside>
-    <p className="instadeep-takeaway">{instadeep.takeaway}</p>
     <footer className="instadeep-sources" aria-label="Sources de la synthèse InstaDeep"><span>Sources :</span>{instadeep.sources.map(s => <a key={s.url} href={s.url} target="_blank" rel="noreferrer">{s.label} ↗</a>)}</footer>
   </div>;
 }
