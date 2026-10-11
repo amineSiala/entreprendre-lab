@@ -1,3 +1,13 @@
+# Verification — roadmap, teaser and supplied media (11 October 2026)
+
+- 86 unit/API/database tests, lint and TypeScript pass. Production compilation passes.
+- Migration cases cover revision-1/2/3 lobby, stories, quizzes, recall, pitch, synthesis and conclusion positions. Scores, answers, IDs, teams and votes are preserved; old synthesis rooms land on the new reveal.
+- The main browser run passed eight scenarios and found a roadmap footer overflow at 1366×768. Heading line-height and spacing were corrected. The dedicated three-projector roadmap check and final full-50-slide rerun both pass. Ten browser scenarios passed across the main run and focused layout reruns, not one uninterrupted green run.
+- The new checks cover hidden media before reveal, roadmap without company spoilers, the 680-million teaser, local cofounder/coat/3M images, both video players, sound enabled, keyboard control isolation, pause on exit, refresh, QR-to-roadmap start and cumulative pitch scores.
+- Screenshots inspected under artifacts/: roadmap, InstaDeep reveal, Dyson reveal, Empowerment Plan and 3M illustration. These are browser simulations, not physical classroom devices. See the latest handoff for final publication status.
+
+---
+
 # Verification — InstaDeep synthesis (11 October 2026)
 
 - 75 unit/API/database tests, lint, TypeScript and online production build passed.

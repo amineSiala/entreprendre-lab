@@ -1,7 +1,7 @@
 # Guide des présentateurs — histoires et quiz
 
 1. Créer une salle via Espace présentateur, puis projeter le QR code. La salle expire quatre heures après création.
-2. Attendre la classe dans le lobby. Cliquer Commencer ou appuyer sur →.
+2. Attendre la classe dans le lobby. Cliquer Commencer ou appuyer sur → pour la feuille de route : découvrir et deviner, trois pauses quiz, mémoire, pitch d’équipe, puis conclusion. Garder les entreprises, formes et dernière surprise secrètes. → commence la première histoire.
 3. Pour chaque entreprise : laisser deviner à partir du teaser ; → raconte l’histoire anonyme ; → révèle le nom, la photo et la forme.
 4. Chaque pause contient trois quiz de 20 secondes. Les téléphones enregistrent le choix au toucher, sans justification.
 5. Après chaque correction, → affiche le classement, puis → poursuit. ← revient à l’explication.
@@ -10,10 +10,12 @@
 8. Défi des pitchs : sélectionner les noms de l’équipe 1 (international), puis 2 (innovant), puis 3 (partenariat). Vérifier les équipes : cliquer une équipe puis un nom pour corriger la répartition. Confirmer exige trois équipes non vides et tous les joueurs répartis. La confirmation verrouille les équipes ; les arrivants tardifs restent dans le public.
 9. Commencer chaque pitch dans l’ordre, puis ouvrir et fermer le vote manuellement. Les autres joueurs notent de 1 à 10 ; ils peuvent changer leur note jusqu’à la fermeture. Personne ne note sa propre équipe. Aucun minuteur imposé.
 10. Après le troisième vote, cliquer Révéler les résultats. Les moyennes et bonus apparaissent ensemble : `round(moyenne / 10 × 7000)` points par membre, ajoutés aux points des quiz. Aucun vote donne zéro. → affiche le classement individuel, puis → ouvre la synthèse InstaDeep.
-11. InstaDeep : une startup née à Tunis rassemble les trois formes des équipes. International : plusieurs pays ; innovant : solutions d’IA ; partenariat : deux cofondateurs. Le rachat de 2023 illustre son parcours ; le montant affiché est le maximum annoncé, comprenant des paiements conditionnels. Aucun nouveau quiz ni bonus. → ouvre la vidéo.
+11. Teaser tunisien : lire le texte, puis laisser deviner la success story d’environ 680 millions de dollars. C’est le maximum annoncé en 2023, comprenant des paiements conditionnels. Ne pas annoncer le nom. → révèle InstaDeep et la photo des cofondateurs : international pour plusieurs pays, innovant pour les solutions d’IA, partenariat pour la fondation à deux. Aucun nouveau quiz ni bonus. → ouvre la vidéo.
 12. Dernière diapositive : cliquer Lire la vidéo. Le son est activé ; les commandes du lecteur restent utilisables au clavier. Quitter la diapositive arrête la lecture.
 
 Pas d’affectation P1/P2/P3 ni de durée totale imposée.
+
+Sur la révélation Dyson, cliquer Lire la vidéo Dyson. Le lecteur conserve ses raccourcis et se met en pause en quittant la slide. Le visuel 3M est une illustration de l’entreprise, pas un portrait d’Art Fry ; son récit reste celui de l’intrapreneuriat.
 
 ## Raccourcis
 

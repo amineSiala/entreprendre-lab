@@ -21,7 +21,9 @@ Flèches gauche/droite pour naviguer. Chaque correction est suivie d’une étap
 - Rappel final : 120 secondes, huit champs. Les brouillons se sauvegardent et restent modifiables. **Valider mes réponses** verrouille le texte et fixe l’heure de score. À défaut, le dernier brouillon sauvegardé compte à la fermeture.
 - Score final : `round((8000 - 4000 × elapsedSeconds / 120) × correctForms / 8)`, avec un temps limité à 0–120 secondes et des formes distinctes. Les corrections restent cachées jusqu’à la révélation collective.
 - La vidéo finale démarre manuellement, avec son et commandes natives.
-- Après le classement final des pitchs, une diapositive InstaDeep montre comment une startup née à Tunis peut réunir les formes international, innovant et partenariat, puis → ouvre la vidéo. Le parcours compte 48 étapes.
+- Commencer ouvre la feuille de route, sans dévoiler les entreprises ni les formes à retrouver. Le parcours compte 50 étapes.
+- Après le classement final des pitchs : teaser tunisien avec le maximum annoncé d’environ 680 millions de dollars, puis révélation InstaDeep avec la photo des cofondateurs et les trois formes, puis vidéo finale. Aucun nouveau quiz ni bonus.
+- Les révélations montrent les médias fournis : manteau Empowerment Plan, illustration de 3M (sans l’attribuer à Art Fry) et vidéo Dyson. Les deux vidéos démarrent manuellement avec son et contrôles natifs ; quitter la slide les met en pause.
 - Avant la vidéo : répartir tous les joueurs en trois équipes, vérifier puis confirmer. Équipe 1 : international ; équipe 2 : innovant ; équipe 3 : partenariat. Les équipes sont ensuite verrouillées, sans minuteur de pitch ni de vote.
 - Après chaque pitch, ouvrir puis fermer le vote de 1 à 10. Chacun note les autres équipes ; les arrivants tardifs restent dans le public. Les notes peuvent changer jusqu’à la fermeture. Révéler les résultats après les trois équipes : `round(moyenne / 10 × 7000)` points supplémentaires par membre, puis → affiche le classement individuel. Aucun vote : zéro bonus.
 

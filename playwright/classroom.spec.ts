@@ -2,7 +2,16 @@ import { test,expect } from "@playwright/test";
 import { beats } from "../src/content/beats.fr";
 import { characters } from "../src/content/curriculum.fr";
 import { start,next,jump,join } from "./helpers";
-test("all 48 steps fit projectors; identities wait for reveal; video plays with keyboard controls",async({page,browser})=>{
+test("roadmap fits each projector without revealing companies",async({page})=>{
+await start(page);await next(page,"roadmap");
+for(const person of characters)await expect(page.locator(".stage-canvas")).not.toContainText(person.company);
+for(const viewport of [{width:1366,height:768},{width:1920,height:1080},{width:1024,height:768}]){
+await page.setViewportSize(viewport);
+const layout=await page.locator(".stage-canvas").evaluate(c=>{const b=c.getBoundingClientRect(),r=document.querySelector(".roadmap-footer")!.getBoundingClientRect();return {canvas:{top:b.top,bottom:b.bottom,height:b.height},footer:{top:r.top,bottom:r.bottom,height:r.height},roadmap:document.querySelector(".roadmap-layout")!.getBoundingClientRect().toJSON(),cards:[...document.querySelectorAll(".roadmap-steps li")].map(e=>e.getBoundingClientRect().height)};});
+expect(layout.footer.bottom).toBeLessThanOrEqual(layout.canvas.bottom+3);
+}
+});
+test("all 50 steps fit projectors; identities wait for reveal; both videos play with keyboard controls",async({page,browser})=>{
 await page.setViewportSize({width:1366,height:768});const code=await start(page);
 const contexts=await Promise.all([1,2,3].map(()=>browser.newContext()));
 for(let i=0;i<3;i++)await join(await contexts[i].newPage(),code,`Pitch ${i+1}`);
@@ -27,18 +36,37 @@ const person=characters.find(c=>c.id===beat.character)!;
 await expect(page.locator(".stage-canvas")).not.toContainText(person.company);
 expect(await page.locator(".stage-canvas img").count()).toBe(0);
 }
-if(beat.kind==="reveal")await expect.poll(()=>page.locator(".entrepreneur-photo img").evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+if(beat.kind==="reveal"&&beat.character!=="innovative")await expect.poll(()=>page.locator(".entrepreneur-photo img").evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+if(beat.kind==="roadmap"){
+for(const person of characters)await expect(page.locator(".stage-canvas")).not.toContainText(person.company);
+await expect(page.locator(".roadmap-steps li")).toHaveCount(5);
+await expect(page.locator(".stage-canvas")).not.toContainText("Tunisie");
+}
+if(beat.kind==="synthesis-teaser"){
+for(const text of ["InstaDeep","Karim","Zohra","BioNTech"])await expect(page.locator(".stage-canvas")).not.toContainText(text);
+await expect(page.locator(".stage-canvas")).toContainText("680 millions de dollars");
+await expect(page.locator(".stage-canvas img, .stage-canvas video")).toHaveCount(0);
+}
+if(beat.id==="story-3-reveal"){
+const v=page.locator("video");await expect.poll(()=>v.evaluate((e:HTMLVideoElement)=>e.readyState)).toBeGreaterThanOrEqual(1);
+expect(await v.evaluate((e:HTMLVideoElement)=>e.paused&&!e.muted)).toBe(true);
+await page.getByRole("button",{name:"Lire la vidéo Dyson",exact:true}).click();await expect.poll(()=>v.evaluate((e:HTMLVideoElement)=>e.currentTime)).toBeGreaterThan(0);
+await v.focus();await page.keyboard.press("ArrowRight");await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","story-3-reveal");
+await page.evaluate(()=>{(window as unknown as {dysonVideo:HTMLVideoElement}).dysonVideo=document.querySelector("video")!;});
+await page.getByRole("heading",{name:"Dyson.",exact:true}).click();
+}
+if(beat.id==="individual-open")expect(await page.evaluate(()=>(window as unknown as {dysonVideo:HTMLVideoElement}).dysonVideo.paused)).toBe(true);
 if(beat.kind==="synthesis"){
 await expect(page.locator(".instadeep-layout")).toContainText("Karim Beguir et Zohra Slim");
 await expect(page.locator(".instadeep-card h2")).toHaveText(["International","Innovant","En partenariat"]);
-await expect(page.locator(".instadeep-layout img, .instadeep-layout video")).toHaveCount(0);
+await expect.poll(()=>page.locator(".instadeep-photo img").evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
 }
 for(const viewport of [{width:1366,height:768},{width:1920,height:1080},{width:1024,height:768}]){
 await page.setViewportSize(viewport);
 const bad=await page.locator(".stage-canvas").evaluate(canvas=>{const b=canvas.getBoundingClientRect();return [...canvas.querySelectorAll("h1,h2,p,.answer-tile,figcaption,video")].filter(el=>{const r=el.getBoundingClientRect();return r.height>0&&(r.bottom>b.bottom+3||r.top<b.top-3||r.right>innerWidth+3||r.left<0);}).map(el=>el.textContent?.slice(0,90));});
 overflow.push(...bad.map(x=>beat.id+" "+viewport.width+" "+x));
 }
-if(["story-1-teaser","story-2-reveal","story-4-reveal","boss-open","instadeep","conclusion"].includes(beat.id))await page.screenshot({path:`artifacts/${beat.id}.png`,animations:"disabled"});
+if(["roadmap","story-3-reveal","story-4-reveal","story-6-reveal","boss-open","instadeep-teaser","instadeep-reveal","conclusion"].includes(beat.id))await page.screenshot({path:`artifacts/${beat.id}.png`,animations:"disabled"});
 }
 expect(overflow).toEqual([]);expect(errors).toEqual([]);
 await expect(page.locator(".speaker-pill")).toHaveCount(0);
@@ -50,9 +78,9 @@ await video.focus();await page.keyboard.press("ArrowLeft");
 await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","conclusion");
 await page.evaluate(()=>{(window as unknown as {closingVideo:HTMLVideoElement}).closingVideo=document.querySelector("video")!;});
 await page.getByRole("button",{name:"Étape précédente",exact:true}).click();
-await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","instadeep");
+await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","instadeep-reveal");
 expect(await page.evaluate(()=>(window as unknown as {closingVideo:HTMLVideoElement}).closingVideo.paused)).toBe(true);
-await page.reload();await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","instadeep");
+await page.reload();await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","instadeep-reveal");
 for(const c of contexts)await c.close();
 });
 test("controller lease and offline preview do not fabricate results",async({page,context})=>{

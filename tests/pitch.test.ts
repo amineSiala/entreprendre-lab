@@ -31,7 +31,7 @@ describe("pitch challenge", () => {
     expect(s.index).toBe(beats.length - 1); expect(s.rounds).toEqual(old.rounds);
     expect(Object.values(s.members).every(m => !!m.publicId)).toBe(true);
     expect(upgradeSession(s)).toBe(s);
-    old.index = 12; expect(upgradeSession(old).index).toBe(12);
+    old.index = 12; expect(upgradeSession(old).index).toBe(13);
   });
   it("assigns duplicate nicknames independently, moves/removes players, and rejects incomplete teams", () => {
     let s = setup(); s.members[studentB].nickname = "Alice";
@@ -82,9 +82,12 @@ describe("pitch challenge", () => {
     expect(commandPitch(s, 0, { command: "reveal", team: 3 })).toBe(s);
     const board = move(s, s.version, 1); expect(board.leaderboardVisible).toBe(true);
     const synthesis = move(board, board.version, 1);
-    expect(beats[synthesis.index].id).toBe("instadeep");
+    expect(beats[synthesis.index].id).toBe("instadeep-teaser");
     expect(snapshot(synthesis, studentA, "student").xp).toBe(points);
-    expect(beats[move(synthesis, synthesis.version, 1).index].kind).toBe("conclusion");
+    const info = move(synthesis, synthesis.version, 1);
+    expect(beats[info.index].id).toBe("instadeep-reveal");
+    expect(snapshot(info, studentA, "student").xp).toBe(points);
+    expect(beats[move(info, info.version, 1).index].kind).toBe("conclusion");
   });
   it("uses the unrounded average and handles no votes without inventing points", () => {
     let s = confirmed(); s = voteTeam(s, 1, [1, 10]); s = voteTeam(s, 2, []); s = voteTeam(s, 3, [7, 8]);
@@ -124,15 +127,24 @@ describe("pitch challenge", () => {
     let s = confirmed();
     for (const team of [1, 2, 3] as TeamId[]) s = voteTeam(s, team, [7]);
     s = cmd(s, { command: "reveal", team: 3 });
-    s = move(s, s.version, 1); s.payloadRevision = 2;
+    s = move(s, s.version, 1); s.payloadRevision = 2; s.index = 45;
     const upgraded = upgradeSession(s);
-    expect(upgraded).toMatchObject({ payloadRevision: 3, index: 45, leaderboardVisible: true, version: s.version });
+    expect(upgraded).toMatchObject({ payloadRevision: 4, index: 46, leaderboardVisible: true, version: s.version });
     expect(upgraded.pitch).toEqual(s.pitch); expect(upgraded.members).toEqual(s.members); expect(upgraded.rounds).toEqual(s.rounds);
     expect(snapshot(upgraded, studentA, "student").xp).toBe(4900);
     const synthesis = move(upgraded, upgraded.version, 1);
-    expect(beats[synthesis.index].id).toBe("instadeep");
+    expect(beats[synthesis.index].id).toBe("instadeep-teaser");
     const finished = { ...s, index: 46, leaderboardVisible: false };
-    expect(upgradeSession(finished)).toMatchObject({ payloadRevision: 3, index: 47, pitch: s.pitch });
+    expect(upgradeSession(finished)).toMatchObject({ payloadRevision: 4, index: 49, pitch: s.pitch });
     expect(upgradeSession(upgraded)).toBe(upgraded);
+  });
+  it.each([
+    [1, 0, "welcome"], [1, 1, "story-1-teaser"], [1, 43, "boss-open"], [1, 45, "conclusion"],
+    [2, 45, "pitch"], [2, 46, "conclusion"], [3, 10, "individual-open"], [3, 44, "boss-results"],
+    [3, 45, "pitch"], [3, 46, "instadeep-reveal"], [3, 47, "conclusion"],
+  ])("maps revision %i beat %i to %s", (revision, index, id) => {
+    const s = sessionFixture(); s.payloadRevision = revision; s.index = index;
+    const next = upgradeSession(s); expect(beats[next.index].id).toBe(id);
+    expect(next.version).toBe(s.version); expect(next.rounds).toEqual(s.rounds);
   });
 });

@@ -5,15 +5,20 @@ import { RoomError } from "./engine";
 import type { Pitch, PitchCommand, SafePitch, Session, TeamId } from "@/types/domain";
 
 export const teamIds: TeamId[] = [1, 2, 3];
+export const PAYLOAD_REVISION = 4;
+const revision3Ids = beats.filter(b => b.id !== "roadmap" && b.id !== "instadeep-teaser").map(b => b.id === "instadeep-reveal" ? "instadeep" : b.id);
+const revision2Ids = revision3Ids.filter(id => id !== "instadeep");
+const revision1Ids = revision2Ids.filter(id => id !== "pitch");
 export function upgradeSession(room: Session): Session {
-  if (room.payloadRevision === 3 && Object.values(room.members).every(m => m.publicId)) return room;
+  if (room.payloadRevision === PAYLOAD_REVISION && Object.values(room.members).every(m => m.publicId)) return room;
   const next = structuredClone(room);
-  if (next.payloadRevision !== 3) {
-    // Revision 1 ended at 45; revision 2 added pitch at 45 and ended at 46.
-    // Keep finished rooms finished, and preserve ongoing pitch state at 45.
-    const oldConclusion = next.payloadRevision === 2 ? 46 : 45;
-    if (next.index >= oldConclusion) next.index = beats.length - 1;
-    next.payloadRevision = 3;
+  if (next.payloadRevision !== PAYLOAD_REVISION) {
+    // Map the original beat ID, rather than applying offsets to live room state.
+    const ids = next.payloadRevision === 3 ? revision3Ids : next.payloadRevision === 2 ? revision2Ids : revision1Ids;
+    const oldId = ids[next.index];
+    if (!oldId) throw new RoomError(410, "Cette salle utilise un parcours incompatible. Créez une nouvelle salle.", "ROOM_EXPIRED");
+    next.index = beats.findIndex(b => b.id === (oldId === "instadeep" ? "instadeep-reveal" : oldId));
+    next.payloadRevision = PAYLOAD_REVISION;
   }
   for (const member of Object.values(next.members)) member.publicId ??= randomUUID();
   return next;

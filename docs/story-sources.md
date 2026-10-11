@@ -24,4 +24,6 @@ La diapositive informative suit le classement des pitchs et précède la vidéo.
 - [BioNTech : annonce du 10 janvier 2023](https://www.biontech.com/int/en/home/mediaroom/news/press-releases/2023/01/biontech-acquire-instadeep-strengthen-pioneering-position-field.html) : environ 362 millions de livres initialement, plus jusqu’à 200 millions sous conditions, soit un maximum annoncé de 562 millions.
 - [InstaDeep : acquisition finalisée le 31 juillet 2023](https://instadeep.com/2023/07/biontech-completes-acquisition-of-instadeep/)
 
-Le montant maximal annoncé n’est pas présenté comme une somme intégralement payée à la clôture. Visuel typographique et icônes SVG locales ; aucune photographie distante.
+Le montant maximal annoncé n’est pas présenté comme une somme intégralement payée à la clôture. L’équivalent d’environ 680 millions de dollars est celui rapporté à l’annonce par [TechCrunch, 10 janvier 2023](https://techcrunch.com/2023/01/10/biontech-acquires-tunisian-born-and-u-k-based-ai-startup-instadeep-for-562m/). Le teaser garde le nom et les fondateurs cachés ; la révélation affiche leur photo fournie par l’organisateur.
+
+Médias locaux ajoutés : Karim-Beguir-et-Zohra-Slim.jpg, GMHomelessCoats-01-John-F-Martin.jpg, founder_of_3M.jpg et video/dyson.mp4. Les crédits décrivent leur provenance fournie, sans attribuer une licence non connue. L’image 3M est légendée comme illustration, sans l’identifier comme Art Fry. La vidéo Dyson apparaît à la révélation seulement.

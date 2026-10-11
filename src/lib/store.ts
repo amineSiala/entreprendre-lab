@@ -7,7 +7,7 @@ import { RoomError } from "@/lib/engine";
 import { getDatabase } from "@netlify/database";
 import { isRetired, LESSON_VERSION } from "./room-policy";
 import { cleanupSql, cleanupParams } from "./room-cleanup";
-import { upgradeSession } from "./pitch";
+import { PAYLOAD_REVISION, upgradeSession } from "./pitch";
 
 // Local rehearsal uses a file; hosted rooms use Postgres row locks across workers.
 type Database = { sessions: Record<string, Session> };
@@ -80,7 +80,7 @@ export function createSession(data: Database, hostHash: string, mode: PlayMode) 
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code: string;
   do { code = Array.from(randomBytes(6), byte => alphabet[byte % alphabet.length]).join(""); } while (data.sessions[code]);
-  const session: Session = { payloadRevision: 3, lessonVersion: LESSON_VERSION, id: randomUUID(), code, hostHash, mode, index: 0, version: 0, createdAt: Date.now(), members: {}, rounds: {} };
+  const session: Session = { payloadRevision: PAYLOAD_REVISION, lessonVersion: LESSON_VERSION, id: randomUUID(), code, hostHash, mode, index: 0, version: 0, createdAt: Date.now(), members: {}, rounds: {} };
   data.sessions[code] = session;
   return session;
 }
