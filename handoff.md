@@ -1,5 +1,11 @@
 # Entreprendre.Lab — Full conversation handoff
 
+## Current update — InstaDeep reveal layout (11 October 2026)
+
+The reveal story now appears directly below its title. The larger founders photo occupies the left column, with International, Innovant and En partenariat stacked in the right column. Small screens retain a single-column layout. The prior acquisition/takeaway removal remains in effect.
+
+Lint and TypeScript passed. The full 50-step Playwright projector scenario passed, including new geometry assertions for the photo/cards and story placement at 1920×1080, 1366×768 and 1024×768. The reveal screenshot was visually inspected. Source commit `7ab69ab` was pushed and published in Netlify deployment `6acc0714fc7dc0ddb3d5118b`, which reached `ready` without errors. Live stage JavaScript and CSS confirm the new story ordering, photo size and stacked cards. Unrelated local changes remain excluded.
+
 ## Current update — InstaDeep reveal text removal (11 October 2026)
 
 Removed the BioNTech acquisition sentence, the £562 million paragraph and the concluding takeaway from the second InstaDeep page (`instadeep-reveal`). The first Tunisian teaser retains its existing takeaway and $680 million wording. Photo, story, three forms and source links remain. The existing pitch browser assertion now expects the reveal title instead of the removed takeaway.
