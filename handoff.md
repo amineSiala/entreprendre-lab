@@ -1,5 +1,11 @@
 # Entreprendre.Lab — Full conversation handoff
 
+## Current update — InstaDeep reveal text removal (11 October 2026)
+
+Removed the BioNTech acquisition sentence, the £562 million paragraph and the concluding takeaway from the second InstaDeep page (`instadeep-reveal`). The first Tunisian teaser retains its existing takeaway and $680 million wording. Photo, story, three forms and source links remain. The existing pitch browser assertion now expects the reveal title instead of the removed takeaway.
+
+Lint and TypeScript checks passed. Source commit `15ca7c7` was pushed to the existing repository and published through the Netlify MCP workflow: deployment `6acc059251b21b60d8a0b969` reached `ready` without errors. Public stage JavaScript was checked: the acquisition and takeaway render blocks are absent while photo/forms/teaser remain. Homepage, stage and founder photo returned 200. No new browser rehearsal was run for this text-only removal. Unrelated local `next-env.d.ts` and `pres/` changes were excluded.
+
 ## Current update — roadmap, Tunisian teaser and supplied media (11 October 2026)
 
 This supersedes prior beat counts and media choices. The deck has 50 beats: QR lobby → roadmap → eight three-step stories and quizzes → recall → pitch activity/leaderboard → anonymous Tunisian teaser → InstaDeep reveal → closing video. The roadmap names only the learning activities, not companies/forms or the Tunisian surprise. The teaser retains the requested sentence and prominently shows approximately $680 million, explicitly the maximum announced in 2023 including conditional payments.
