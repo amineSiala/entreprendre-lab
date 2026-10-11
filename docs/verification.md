@@ -1,3 +1,17 @@
+# Verification — revised company stories (11 October 2026)
+
+This section supersedes the historical lesson and timing checks below.
+
+- Lint, TypeScript and online production build passed.
+- 60 unit/API/Postgres tests passed, including exact four-hour expiry, durable cleanup, legacy removal, concurrent retries, aliases and scoring at 0/60/120 seconds.
+- Eight Playwright scenarios passed across a full run and one focused selector-fix rerun. They exercise all 46 beats, three projector sizes, 320/390/430 px phones, hidden reveals, draft recovery, explicit submission, the real 120-second timeout (4,000 points), rankings, 60 participants, expired polling and video controls.
+- These are browser simulations, not physical phone/projector tests.
+- Local server restored on port 3000; retired-room access returned 410 and triggered persistent cleanup.
+
+Live deployment: 6acbcef28528b36021898905 (source 744e8cd), ready. Database migration applied; cleanup-rooms registered with schedule */5 * * * *. Public routes/assets returned 200, room expiry 410, missing presenter credentials 401, and video range 206. Edge played the hosted video with sound enabled and no media error. Hosted authenticated room creation and an unattended scheduled invocation were not observed; authentication/multiplayer and cleanup behavior were tested locally.
+
+---
+
 > Mise à jour du 10 octobre 2026 : la version en ligne est désormais publiée sur https://entreprendre-lab.netlify.app avec stockage Postgres. Voir le README pour les nouveaux tests et les modalités de publication. Les mentions de limitation au réseau local ci-dessous décrivent la validation initiale.
 
 # Vérification — 9 octobre 2026
