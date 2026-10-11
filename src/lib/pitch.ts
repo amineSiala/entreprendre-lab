@@ -6,12 +6,14 @@ import type { Pitch, PitchCommand, SafePitch, Session, TeamId } from "@/types/do
 
 export const teamIds: TeamId[] = [1, 2, 3];
 export function upgradeSession(room: Session): Session {
-  if (room.payloadRevision === 2 && Object.values(room.members).every(m => m.publicId)) return room;
+  if (room.payloadRevision === 3 && Object.values(room.members).every(m => m.publicId)) return room;
   const next = structuredClone(room);
-  if (next.payloadRevision !== 2) {
-    // The previous deck's final beat was index 45. Keep finished rooms finished.
-    if (next.index >= 45) next.index = beats.length - 1;
-    next.payloadRevision = 2;
+  if (next.payloadRevision !== 3) {
+    // Revision 1 ended at 45; revision 2 added pitch at 45 and ended at 46.
+    // Keep finished rooms finished, and preserve ongoing pitch state at 45.
+    const oldConclusion = next.payloadRevision === 2 ? 46 : 45;
+    if (next.index >= oldConclusion) next.index = beats.length - 1;
+    next.payloadRevision = 3;
   }
   for (const member of Object.values(next.members)) member.publicId ??= randomUUID();
   return next;

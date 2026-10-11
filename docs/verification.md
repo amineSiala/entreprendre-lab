@@ -1,3 +1,13 @@
+# Verification — InstaDeep synthesis (11 October 2026)
+
+- 75 unit/API/database tests, lint, TypeScript and online production build passed.
+- Both relevant Playwright scenarios passed: the full 48-slide sequence at 1920×1080, 1366×768 and 1024×768, and the four-phone pitch rehearsal through rankings, InstaDeep and video. The prior nine-scenario regression remains documented below.
+- Tested additive revision-3 upgrades for pre-pitch conclusions and revision-2 pitch rankings/conclusions. Public IDs, answers, team assignments, votes, frozen results and scores are preserved; new conclusions stay on the video.
+- Checked the three entrepreneurship cards, no remote image dependency, keyboard navigation, refresh, video playback and pause on exit. Inspected artifacts/instadeep.png at 1024×768. These are simulated browsers, not physical classroom devices.
+- Deployment verification pending; see the latest handoff for release details.
+
+---
+
 # Verification — team pitch challenge (11 October 2026)
 
 - 74 unit/API/Postgres tests passed. Coverage includes team confirmation, duplicate names, private public IDs, own-team vote rejection, vote revision ordering, closure races, fractional averages, zero votes, idempotent reveal, cumulative points, deletion, additive upgrades and exact four-hour expiry.

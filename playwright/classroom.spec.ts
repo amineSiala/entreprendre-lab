@@ -2,7 +2,7 @@ import { test,expect } from "@playwright/test";
 import { beats } from "../src/content/beats.fr";
 import { characters } from "../src/content/curriculum.fr";
 import { start,next,jump,join } from "./helpers";
-test("all 47 steps fit projectors; identities wait for reveal; video plays with keyboard controls",async({page,browser})=>{
+test("all 48 steps fit projectors; identities wait for reveal; video plays with keyboard controls",async({page,browser})=>{
 await page.setViewportSize({width:1366,height:768});const code=await start(page);
 const contexts=await Promise.all([1,2,3].map(()=>browser.newContext()));
 for(let i=0;i<3;i++)await join(await contexts[i].newPage(),code,`Pitch ${i+1}`);
@@ -28,12 +28,17 @@ await expect(page.locator(".stage-canvas")).not.toContainText(person.company);
 expect(await page.locator(".stage-canvas img").count()).toBe(0);
 }
 if(beat.kind==="reveal")await expect.poll(()=>page.locator(".entrepreneur-photo img").evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+if(beat.kind==="synthesis"){
+await expect(page.locator(".instadeep-layout")).toContainText("Karim Beguir et Zohra Slim");
+await expect(page.locator(".instadeep-card h2")).toHaveText(["International","Innovant","En partenariat"]);
+await expect(page.locator(".instadeep-layout img, .instadeep-layout video")).toHaveCount(0);
+}
 for(const viewport of [{width:1366,height:768},{width:1920,height:1080},{width:1024,height:768}]){
 await page.setViewportSize(viewport);
 const bad=await page.locator(".stage-canvas").evaluate(canvas=>{const b=canvas.getBoundingClientRect();return [...canvas.querySelectorAll("h1,h2,p,.answer-tile,figcaption,video")].filter(el=>{const r=el.getBoundingClientRect();return r.height>0&&(r.bottom>b.bottom+3||r.top<b.top-3||r.right>innerWidth+3||r.left<0);}).map(el=>el.textContent?.slice(0,90));});
 overflow.push(...bad.map(x=>beat.id+" "+viewport.width+" "+x));
 }
-if(["story-1-teaser","story-2-reveal","story-4-reveal","boss-open","conclusion"].includes(beat.id))await page.screenshot({path:`artifacts/${beat.id}.png`,animations:"disabled"});
+if(["story-1-teaser","story-2-reveal","story-4-reveal","boss-open","instadeep","conclusion"].includes(beat.id))await page.screenshot({path:`artifacts/${beat.id}.png`,animations:"disabled"});
 }
 expect(overflow).toEqual([]);expect(errors).toEqual([]);
 await expect(page.locator(".speaker-pill")).toHaveCount(0);
@@ -45,9 +50,9 @@ await video.focus();await page.keyboard.press("ArrowLeft");
 await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","conclusion");
 await page.evaluate(()=>{(window as unknown as {closingVideo:HTMLVideoElement}).closingVideo=document.querySelector("video")!;});
 await page.getByRole("button",{name:"Étape précédente",exact:true}).click();
-await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","pitch");
+await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","instadeep");
 expect(await page.evaluate(()=>(window as unknown as {closingVideo:HTMLVideoElement}).closingVideo.paused)).toBe(true);
-await page.reload();await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","pitch");
+await page.reload();await expect(page.locator(".stage-canvas")).toHaveAttribute("data-beat","instadeep");
 for(const c of contexts)await c.close();
 });
 test("controller lease and offline preview do not fabricate results",async({page,context})=>{

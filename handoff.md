@@ -1,5 +1,13 @@
 # Entreprendre.Lab — Full conversation handoff
 
+## Current update — InstaDeep synthesis (11 October 2026)
+
+The deck now has 48 beats. One French informational slide, `instadeep` / kind `synthesis`, follows the pitch leaderboard and precedes the closing video. It immediately names InstaDeep, explains its 2014 Tunis origin with Karim Beguir and Zohra Slim, two laptops and approximately $2,000, then links the three team forms: international, innovative and partner entrepreneurship. The BioNTech acquisition is dated July 2023; £562 million is explicitly the maximum announced in January, including conditional payments. Official source links appear on the slide and in docs/story-sources.md. Local SVG icons and text require no remote photograph.
+
+- No extra question, timer or points. Presenter notes distinguish cofounding from the later BioNTech partnership/acquisition.
+- New rooms use `payloadRevision: 3`. On access, revision-2 rooms at conclusion index 46 map to new conclusion 47; their pitch index 45 stays unchanged. Older pre-pitch rooms at conclusion 45 also map to 47. Member public IDs, rounds, teams, votes, frozen results, score totals and leaderboard display are preserved. Four-hour expiry and the lesson version remain unchanged.
+- Validation: 75 unit/API/database tests, lint, TypeScript and online production build pass. Both relevant browser scenarios pass (1.4 minutes): the full 48-beat deck at three projector sizes, plus the independent-phone pitch rehearsal through InstaDeep and the video. Video controls, pause on exit, back navigation and refresh were checked. The InstaDeep screenshot at 1024×768 was visually inspected; there are no remote images. Physical classroom hardware is not tested. Publication is pending at this checkpoint.
+
 ## Current update — three-team pitch challenge (11 October 2026)
 
 This section supersedes the earlier 46-beat count and conclusion ordering. The deck has 47 beats: the pitch activity follows the final recall leaderboard and precedes the existing closing video.

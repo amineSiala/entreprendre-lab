@@ -10,6 +10,7 @@ import { Lobby } from "@/components/lobby";
 import { LeaderboardBeat } from "@/components/leaderboard";
 import { StoryBeat, ClosingBeat } from "@/components/story";
 import { PitchStage } from "@/components/pitch";
+import { InstaDeepBeat } from "@/components/instadeep";
 import { beats } from "@/content/beats.fr";
 import { characters, chapters } from "@/content/curriculum.fr";
 import { questions } from "@/content/questions.fr";
@@ -137,6 +138,7 @@ export function Stage({ code }: { code: string }) {
         {beat.kind === "title" && <Lobby code={code} url={joinUrl} names={fallbackIndex === null ? state.lobbyParticipants ?? [] : []} count={state.participants} copy={copyLink} start={() => void navigate(1)} disabled={busy || !connected || !state.canControl || fallbackIndex !== null} />}
         {["teaser", "story", "reveal"].includes(beat.kind) && <StoryBeat beat={beat} />}
         {beat.kind === "conclusion" && <ClosingBeat />}
+        {beat.kind === "synthesis" && <InstaDeepBeat />}
         {beat.kind === "pitch" && (fallbackIndex === null && state.pitch ? <PitchStage pitch={state.pitch} disabled={busy || !connected || !state.canControl} command={pitchCommand} /> : <div className="empty-results"><h1>Le défi des équipes est sur le serveur.</h1><p>Reconnectez-vous pour composer les équipes et enregistrer les votes.</p></div>)}
         {question && beat.kind === "question-open" && <QuestionBeat key={question.id} question={question} state={state} round={round} now={now} />}
         {question && beat.kind === "recall-open" && <RecallBeat key={question.id} question={question} state={state} round={round} now={now} />}

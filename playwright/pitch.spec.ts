@@ -68,6 +68,8 @@ test("three teams pitch, edit private ratings, recover saves, reveal bonuses and
     await page.screenshot({ path: "artifacts/pitch-results.png", animations: "disabled" });
     await page.reload(); await expect(page.locator(".team-1 .pitch-average")).toHaveText("7,0/10");
     await next(page, "pitch-leaderboard"); await expect(page.locator(".ranking-top")).toContainText("Bilal");
+    await next(page, "instadeep"); await expect(page.locator(".instadeep-layout")).toContainText("Une même entreprise peut réunir plusieurs formes d’entrepreneuriat.");
+    await expect(phones[0].locator(".student-player-strip")).toContainText("4900 points");
     await next(page, "conclusion"); await expect(page.locator("video")).toBeVisible();
   } finally { for (const c of contexts) await c.close(); }
 });

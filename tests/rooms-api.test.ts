@@ -106,7 +106,7 @@ describe("team pitch API", () => {
     delete data.sessions[code].payloadRevision; data.sessions[code].index = 45;
     await writeFile(file, JSON.stringify(data));
     expect((await request(host, code)).payload.index).toBe(beats.length - 1);
-    const upgraded = JSON.parse(await readFile(file, "utf8")); expect(upgraded.sessions[code].payloadRevision).toBe(2);
+    const upgraded = JSON.parse(await readFile(file, "utf8")); expect(upgraded.sessions[code].payloadRevision).toBe(3);
     upgraded.sessions[code].index = beats.findIndex(b => b.kind === "pitch");
     upgraded.sessions[code].pitch = { phase: "voting", activeTeam: 1, selection: "review", assignments: {}, votes: {}, results: {} };
     const created = upgraded.sessions[code].createdAt; await writeFile(file, JSON.stringify(upgraded));

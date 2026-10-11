@@ -1,6 +1,6 @@
 export type FormId = "individual" | "partner" | "innovative" | "social" | "highgrowth" | "intrapreneur" | "family" | "international";
 export type PlayMode = "phones";
-export type BeatKind = "title" | "teaser" | "story" | "reveal" | "question-open" | "question-results" | "recall-open" | "recall-results" | "pitch" | "conclusion";
+export type BeatKind = "title" | "teaser" | "story" | "reveal" | "question-open" | "question-results" | "recall-open" | "recall-results" | "pitch" | "synthesis" | "conclusion";
 export type Beat = { id: string; chapter: number; kind: BeatKind; title: string; character?: FormId; questionId?: string };
 export type Question = { id: string; kind: "choice" | "vote" | "recall"; tag: string; title: string; scenario: string; prompt: string; options: string[]; reasons?: string[]; seconds: number; recallCount?: number; forms: FormId[] };
 export type Answer = { choice?: number; reason?: number; recall?: string[] };

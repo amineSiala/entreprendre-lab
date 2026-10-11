@@ -16,5 +16,6 @@ export const beats: Beat[] = [
 ...storyBeats(5, 8, 6), ...quizBeats(["internal", "generations", "borders"], 7),
 ...quizBeats(["boss"], 8),
 { id: "pitch", chapter: 9, kind: "pitch", title: "Trois équipes. Trois idées à défendre." },
+{ id: "instadeep", chapter: 9, kind: "synthesis", title: "InstaDeep : une startup tunisienne, trois façons d’entreprendre" },
 { id: "conclusion", chapter: 9, kind: "conclusion", title: "Tout commence par une occasion d’agir." },
 ];
