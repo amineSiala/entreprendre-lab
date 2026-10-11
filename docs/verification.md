@@ -4,7 +4,7 @@
 - Both relevant Playwright scenarios passed: the full 48-slide sequence at 1920×1080, 1366×768 and 1024×768, and the four-phone pitch rehearsal through rankings, InstaDeep and video. The prior nine-scenario regression remains documented below.
 - Tested additive revision-3 upgrades for pre-pitch conclusions and revision-2 pitch rankings/conclusions. Public IDs, answers, team assignments, votes, frozen results and scores are preserved; new conclusions stay on the video.
 - Checked the three entrepreneurship cards, no remote image dependency, keyboard navigation, refresh, video playback and pause on exit. Inspected artifacts/instadeep.png at 1024×768. These are simulated browsers, not physical classroom devices.
-- Deployment verification pending; see the latest handoff for release details.
+- Published source 836c033 in Netlify deployment 6acbef0dc15e4a1a92655542, ready without errors. Live stage bundles contain the new synthesis, founders, qualified acquisition amount and sources. Public assets/routes returned 200, missing presenter credentials 401, retired-room access 410 and video range 206; sound-enabled playback worked in Edge. Authenticated room and upgrade rehearsals were local. See the latest handoff for details.
 
 ---
 
