@@ -63,6 +63,16 @@ await expect.poll(()=>page.locator(".instadeep-photo img").evaluate((img:HTMLIma
 }
 for(const viewport of [{width:1366,height:768},{width:1920,height:1080},{width:1024,height:768}]){
 await page.setViewportSize(viewport);
+if(beat.kind==="synthesis"){
+const placement=await page.locator(".instadeep-layout").evaluate(el=>{
+const photo=el.querySelector(".instadeep-photo")!.getBoundingClientRect();
+const forms=el.querySelector(".instadeep-forms")!.getBoundingClientRect();
+const story=el.querySelector(".instadeep-story")!.getBoundingClientRect();
+return {photoRight:photo.right,photoTop:photo.top,formsLeft:forms.left,formsTop:forms.top,storyBottom:story.bottom};
+});
+expect(placement.photoRight).toBeLessThan(placement.formsLeft);
+expect(placement.storyBottom).toBeLessThanOrEqual(Math.min(placement.photoTop,placement.formsTop));
+}
 const bad=await page.locator(".stage-canvas").evaluate(canvas=>{const b=canvas.getBoundingClientRect();return [...canvas.querySelectorAll("h1,h2,p,.answer-tile,figcaption,video")].filter(el=>{const r=el.getBoundingClientRect();return r.height>0&&(r.bottom>b.bottom+3||r.top<b.top-3||r.right>innerWidth+3||r.left<0);}).map(el=>el.textContent?.slice(0,90));});
 overflow.push(...bad.map(x=>beat.id+" "+viewport.width+" "+x));
 }

@@ -9,12 +9,12 @@ export function TunisianTeaserBeat() {
 }
 export function InstaDeepBeat() {
   return <div className="instadeep-layout">
-    <header><p className="eyebrow">NÉE EN TUNISIE · UNE HISTOIRE QUI RÉUNIT VOS TROIS ÉQUIPES</p><h1>{instadeep.title}</h1></header>
-    <div className="instadeep-intro"><figure className="instadeep-photo"><Image src="/media/instadeep-founders.webp" alt="Karim Beguir et Zohra Slim, cofondateurs d’InstaDeep" width={696} height={385} priority sizes="(max-width: 900px) 90vw, 30vw" /><figcaption>Karim Beguir et Zohra Slim · les cofondateurs</figcaption></figure><p className="instadeep-story">{instadeep.story}</p></div>
+    <header><p className="eyebrow">NÉE EN TUNISIE · UNE HISTOIRE QUI RÉUNIT VOS TROIS ÉQUIPES</p><h1>{instadeep.title}</h1><p className="instadeep-story">{instadeep.story}</p></header>
+    <div className="instadeep-intro"><figure className="instadeep-photo"><Image src="/media/instadeep-founders.webp" alt="Karim Beguir et Zohra Slim, cofondateurs d’InstaDeep" width={696} height={385} priority sizes="(max-width: 900px) 90vw, 40vw" /><figcaption>Karim Beguir et Zohra Slim · les cofondateurs</figcaption></figure>
     <div className="instadeep-forms">{instadeep.forms.map((form, index) => {
       const Icon = icons[index];
       return <article key={form.id} className={`instadeep-card instadeep-team-${index + 1}`}><div className="instadeep-card-top"><Icon size={30} aria-hidden="true" /><span>ÉQUIPE {index + 1}</span></div><h2>{form.label}</h2><p>{form.text}</p></article>;
-    })}</div>
+    })}</div></div>
     <footer className="instadeep-sources" aria-label="Sources de la synthèse InstaDeep"><span>Sources :</span>{instadeep.sources.map(s => <a key={s.url} href={s.url} target="_blank" rel="noreferrer">{s.label} ↗</a>)}</footer>
   </div>;
 }
